@@ -29,6 +29,24 @@ services:
       PORT: 3001
     volumes:
       - ./apps/api/src:/app/src
+      - ./packages/database/src:/app/node_modules/@repo/database/src
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  ws:
+    build:
+      context: .
+      dockerfile: apps/ws/Dockerfile
+    ports:
+      - "3002:3002"
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/typing_game
+      PORT: 3002
+    volumes:
+      - ./apps/ws/src:/app/src
+      - ./packages/database/src:/app/node_modules/@repo/database/src
+      - ./packages/shared/src:/app/node_modules/@repo/shared/src
     depends_on:
       postgres:
         condition: service_healthy
@@ -45,8 +63,10 @@ services:
       - ./apps/frontend/src:/app/src
       - ./apps/frontend/next.config.ts:/app/next.config.ts
       - ./apps/frontend/components.json:/app/components.json
+      - ./packages/shared/src:/app/node_modules/@repo/shared/src
     depends_on:
       - api
+      - ws
 
 volumes:
   pgdata:

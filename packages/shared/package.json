@@ -1,0 +1,13 @@
+{
+	"name": "@repo/shared",
+	"version": "0.1.0",
+	"private": true,
+	"exports": {
+		".": "./src/index.ts",
+		"./ws-protocol": "./src/ws-protocol.ts"
+	},
+	"devDependencies": {
+		"@repo/typescript-config": "*",
+		"typescript": "^5"
+	}
+}

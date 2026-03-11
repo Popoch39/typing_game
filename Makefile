@@ -1,8 +1,12 @@
-.PHONY: up down build dev logs ps migrate generate studio clean db-push test-db test test-api test-frontend
+.PHONY: install up down build dev dev-ws logs ps migrate generate studio clean db-push test-db test test-api test-frontend test-ws bench-ws
+
+# Install all dependencies (local + rebuild containers)
+install:
+	bun install
 
 # Start all services
 up:
-	docker compose up -d
+	docker compose up
 
 # Start all services with rebuild
 build:
@@ -40,6 +44,10 @@ generate:
 db-push:
 	docker compose exec api bunx drizzle-kit push
 
+# Run WS server locally (not in Docker)
+dev-ws:
+	cd apps/ws && DATABASE_URL=postgres://postgres:postgres@localhost:5433/typing_game bun --watch src/index.ts
+
 # Open Drizzle Studio
 studio:
 	cd apps/api && DATABASE_URL=postgres://postgres:postgres@localhost:5433/typing_game bun run db:studio
@@ -54,7 +62,7 @@ test-db:
 	docker compose exec postgres psql -U postgres -c "CREATE DATABASE typing_game_test"
 
 # Run all tests
-test: test-api test-frontend
+test: test-api test-frontend test-ws
 
 # Run API tests
 test-api:
@@ -63,3 +71,11 @@ test-api:
 # Run frontend tests
 test-frontend:
 	cd apps/frontend && bunx vitest run
+
+# Run WS tests
+test-ws:
+	cd apps/ws && bun test
+
+# Stress test WS (internal, no server needed)
+bench-ws:
+	cd apps/ws && bun run src/bench/stress.ts --keystrokes 100000
