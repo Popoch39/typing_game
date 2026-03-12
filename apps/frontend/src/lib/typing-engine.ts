@@ -1,3 +1,5 @@
+import { ScoringEngine } from "@repo/shared/scoring-engine";
+
 export type CharState =
 	| "correct"
 	| "incorrect"
@@ -10,6 +12,7 @@ export interface WordState {
 	chars: { char: string; state: CharState }[];
 	typed: string;
 	completed: boolean;
+	hadError: boolean;
 }
 
 export interface EngineState {
@@ -28,6 +31,10 @@ export interface EngineState {
 	correctChars: number;
 	incorrectChars: number;
 	totalCharsTyped: number;
+	score: number;
+	combo: number;
+	lastWordScore: number;
+	lastWordIsPerfect: boolean;
 }
 
 export interface EngineCallbacks {
@@ -35,6 +42,8 @@ export interface EngineCallbacks {
 	onTick: () => void;
 	onComplete: () => void;
 }
+
+const MAX_EXTRA_CHARS = 10;
 
 export class TypingEngine {
 	private words: WordState[];
@@ -52,6 +61,9 @@ export class TypingEngine {
 	private timer: ReturnType<typeof setInterval> | null = null;
 	private callbacks: EngineCallbacks;
 	private wpmHistory: { time: number; wpm: number }[] = [];
+	private pendingStateChange = false;
+	private scoringEngine = new ScoringEngine();
+	private lastWordIsPerfect = false;
 
 	constructor(
 		wordStrings: string[],
@@ -66,12 +78,22 @@ export class TypingEngine {
 		this.callbacks = callbacks;
 	}
 
+	private scheduleStateChange() {
+		if (this.pendingStateChange) return;
+		this.pendingStateChange = true;
+		requestAnimationFrame(() => {
+			this.pendingStateChange = false;
+			this.callbacks.onStateChange();
+		});
+	}
+
 	private createWordState(word: string): WordState {
 		return {
 			word,
 			chars: word.split("").map((char) => ({ char, state: "pending" })),
 			typed: "",
 			completed: false,
+			hadError: false,
 		};
 	}
 
@@ -134,17 +156,20 @@ export class TypingEngine {
 			} else {
 				word.chars[this.currentCharIndex].state = "incorrect";
 				this.incorrectChars++;
+				word.hadError = true;
 			}
 			this.currentCharIndex++;
 		} else {
-			// Extra chars beyond word length
+			// Extra chars beyond word length — cap to prevent DOM growth
+			if (this.currentCharIndex >= word.word.length + MAX_EXTRA_CHARS) return;
 			word.chars.push({ char, state: "extra" });
 			this.currentCharIndex++;
 			this.incorrectChars++;
+			word.hadError = true;
 		}
 
 		word.typed = word.typed + char;
-		this.callbacks.onStateChange();
+		this.scheduleStateChange();
 	}
 
 	handleSpace(): void {
@@ -164,6 +189,9 @@ export class TypingEngine {
 		word.completed = true;
 		this.totalCharsTyped++; // count space
 
+		const result = this.scoringEngine.scoreWord(word.word.length, word.hadError);
+		this.lastWordIsPerfect = result.isPerfect;
+
 		this.currentWordIndex++;
 		this.currentCharIndex = 0;
 
@@ -173,7 +201,7 @@ export class TypingEngine {
 			return;
 		}
 
-		this.callbacks.onStateChange();
+		this.scheduleStateChange();
 	}
 
 	handleBackspace(): void {
@@ -191,6 +219,7 @@ export class TypingEngine {
 				word.chars[this.currentCharIndex].state = "pending";
 			}
 			word.typed = word.typed.slice(0, -1);
+			word.hadError = true;
 		} else if (this.currentWordIndex > 0) {
 			// Go back to previous word only if it has errors
 			const prevWord = this.words[this.currentWordIndex - 1];
@@ -219,7 +248,7 @@ export class TypingEngine {
 			this.currentCharIndex = prevWord.typed.length;
 		}
 
-		this.callbacks.onStateChange();
+		this.scheduleStateChange();
 	}
 
 	handleCtrlBackspace(): void {
@@ -234,9 +263,10 @@ export class TypingEngine {
 			.split("")
 			.map((char) => ({ char, state: "pending" as CharState }));
 		word.typed = "";
+		word.hadError = false;
 		this.currentCharIndex = 0;
 
-		this.callbacks.onStateChange();
+		this.scheduleStateChange();
 	}
 
 	getState(): EngineState {
@@ -273,6 +303,10 @@ export class TypingEngine {
 			correctChars: this.correctChars,
 			incorrectChars: this.incorrectChars,
 			totalCharsTyped: this.totalCharsTyped,
+			score: this.scoringEngine.totalScore,
+			combo: this.scoringEngine.combo,
+			lastWordScore: this.scoringEngine.lastWordScore,
+			lastWordIsPerfect: this.lastWordIsPerfect,
 		};
 	}
 
@@ -293,6 +327,7 @@ export class TypingEngine {
 		this.totalCharsTyped = 0;
 		this.startTime = 0;
 		this.wpmHistory = [];
+		this.scoringEngine.reset();
 		this.callbacks.onStateChange();
 	}
 

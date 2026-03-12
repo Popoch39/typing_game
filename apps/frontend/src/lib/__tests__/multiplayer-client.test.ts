@@ -419,38 +419,46 @@ describe("MultiplayerClient", () => {
 		it("sendKeystroke sends keystroke char", () => {
 			const { client, getWs } = readyClient();
 			client.sendKeystroke({ key: "char", char: "a" });
-			expect(JSON.parse(getWs().sent[0])).toEqual({
+			const msg = JSON.parse(getWs().sent[0]);
+			expect(msg).toMatchObject({
 				type: "keystroke",
 				key: "char",
 				char: "a",
 			});
+			expect(msg.t).toEqual(expect.any(Number));
 		});
 
 		it("sendKeystroke sends keystroke space", () => {
 			const { client, getWs } = readyClient();
 			client.sendKeystroke({ key: "space" });
-			expect(JSON.parse(getWs().sent[0])).toEqual({
+			const msg = JSON.parse(getWs().sent[0]);
+			expect(msg).toMatchObject({
 				type: "keystroke",
 				key: "space",
 			});
+			expect(msg.t).toEqual(expect.any(Number));
 		});
 
 		it("sendKeystroke sends keystroke backspace", () => {
 			const { client, getWs } = readyClient();
 			client.sendKeystroke({ key: "backspace" });
-			expect(JSON.parse(getWs().sent[0])).toEqual({
+			const msg = JSON.parse(getWs().sent[0]);
+			expect(msg).toMatchObject({
 				type: "keystroke",
 				key: "backspace",
 			});
+			expect(msg.t).toEqual(expect.any(Number));
 		});
 
 		it("sendKeystroke sends keystroke ctrl_backspace", () => {
 			const { client, getWs } = readyClient();
 			client.sendKeystroke({ key: "ctrl_backspace" });
-			expect(JSON.parse(getWs().sent[0])).toEqual({
+			const msg = JSON.parse(getWs().sent[0]);
+			expect(msg).toMatchObject({
 				type: "keystroke",
 				key: "ctrl_backspace",
 			});
+			expect(msg.t).toEqual(expect.any(Number));
 		});
 
 		it("send is no-op when WS not open", () => {

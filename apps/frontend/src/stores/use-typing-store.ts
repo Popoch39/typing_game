@@ -27,6 +27,10 @@ interface TypingStore {
 	correctChars: number;
 	incorrectChars: number;
 	totalCharsTyped: number;
+	score: number;
+	combo: number;
+	lastWordScore: number;
+	lastWordIsPerfect: boolean;
 	// 1v1 reserved
 	opponent: EngineState | null;
 	// Actions
@@ -57,14 +61,19 @@ export const useTypingStore = create<TypingStore>((set, get) => ({
 	correctChars: 0,
 	incorrectChars: 0,
 	totalCharsTyped: 0,
+	score: 0,
+	combo: 1.0,
+	lastWordScore: 0,
+	lastWordIsPerfect: false,
 	opponent: null,
 
 	syncFromEngine: () => {
 		const { engine, wordsVersion } = get();
 		if (!engine) return;
 		const state = engine.getState();
+		const words = [...state.words];
 		set({
-			words: [...state.words],
+			words,
 			wordsVersion: wordsVersion + 1,
 			currentWordIndex: state.currentWordIndex,
 			currentCharIndex: state.currentCharIndex,
@@ -80,6 +89,10 @@ export const useTypingStore = create<TypingStore>((set, get) => ({
 			correctChars: state.correctChars,
 			incorrectChars: state.incorrectChars,
 			totalCharsTyped: state.totalCharsTyped,
+			score: state.score,
+			combo: state.combo,
+			lastWordScore: state.lastWordScore,
+			lastWordIsPerfect: state.lastWordIsPerfect,
 		});
 	},
 
@@ -96,6 +109,9 @@ export const useTypingStore = create<TypingStore>((set, get) => ({
 			isRunning: state.isRunning,
 			isComplete: state.isComplete,
 			wpmHistory: state.wpmHistory,
+			score: state.score,
+			combo: state.combo,
+			lastWordScore: state.lastWordScore,
 		});
 	},
 

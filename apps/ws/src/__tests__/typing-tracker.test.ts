@@ -233,6 +233,111 @@ describe("ServerTypingTracker", () => {
 		});
 	});
 
+	describe("hadError tracking", () => {
+		it("no error on perfect word", () => {
+			const t = createTracker(["abc", "de"]);
+			typeWord(t, "abc");
+			t.handleSpace();
+			const stats = t.getStats(START + 60_000);
+			// Perfect word should give accuracy bonus (1.5x)
+			// base=10 (3 chars) * 1.5 * 1.0 combo = 15
+			expect(stats.score).toBe(15);
+		});
+
+		it("hadError on incorrect char", () => {
+			const t = createTracker(["abc"]);
+			t.handleChar("x"); // wrong → hadError
+			t.handleChar("b");
+			t.handleChar("c");
+			t.handleSpace();
+			const stats = t.getStats(START + 60_000);
+			// Error word: base=10 * 1.0 * 1.0 = 10
+			expect(stats.score).toBe(10);
+		});
+
+		it("hadError on backspace", () => {
+			const t = createTracker(["ab"]);
+			t.handleChar("a");
+			t.handleBackspace(); // hadError set
+			t.handleChar("a");
+			t.handleChar("b");
+			t.handleSpace();
+			const stats = t.getStats(START + 60_000);
+			// Error word: base=10 * 1.0 * 1.0 = 10
+			expect(stats.score).toBe(10);
+		});
+
+		it("ctrl+backspace resets hadError", () => {
+			const t = createTracker(["abc"]);
+			t.handleChar("x"); // wrong
+			t.handleCtrlBackspace(); // resets hadError
+			typeWord(t, "abc"); // correct
+			t.handleSpace();
+			const stats = t.getStats(START + 60_000);
+			// Perfect after ctrl+backspace: base=10 * 1.5 * 1.0 = 15
+			expect(stats.score).toBe(15);
+		});
+
+		it("hadError on missed chars (space early)", () => {
+			const t = createTracker(["abc", "de"]);
+			t.handleChar("a");
+			t.handleSpace(); // 2 missed → hadError
+			const stats = t.getStats(START + 60_000);
+			// Error word: base=10 * 1.0 * 1.0 = 10
+			expect(stats.score).toBe(10);
+		});
+	});
+
+	describe("scoring", () => {
+		it("combo increases on consecutive perfect words", () => {
+			const t = createTracker(["ab", "cd", "ef"]);
+			typeWord(t, "ab");
+			t.handleSpace();
+			expect(t.getStats(START).combo).toBe(1.25);
+
+			typeWord(t, "cd");
+			t.handleSpace();
+			expect(t.getStats(START).combo).toBe(1.5);
+		});
+
+		it("combo halves on error word", () => {
+			const t = createTracker(["ab", "cd", "ef", "gh"]);
+			// Build combo
+			typeWord(t, "ab");
+			t.handleSpace(); // combo → 1.25
+			typeWord(t, "cd");
+			t.handleSpace(); // combo → 1.5
+
+			// Error word
+			t.handleChar("x");
+			t.handleChar("f");
+			t.handleSpace(); // combo → max(1.0, round(1.5/2)) = max(1.0, 0.75) = 1.0
+			expect(t.getStats(START).combo).toBe(1.0);
+		});
+
+		it("tracks completedAt on completion", () => {
+			const t = createTracker(["ab"]);
+			expect(t.completedAt).toBeNull();
+			typeWord(t, "ab");
+			t.handleSpace();
+			expect(t.completedAt).not.toBeNull();
+			expect(typeof t.completedAt).toBe("number");
+		});
+
+		it("computeFinalScore works", () => {
+			const t = createTracker(["hello"]);
+			typeWord(t, "hello");
+			t.handleSpace();
+			const stats = t.getStats(START + 60_000);
+			// Perfect: base=25 * 1.5 * 1.0 = 37 total
+			expect(stats.score).toBe(37);
+			// Final with wpm=50: 37 * 1.0 = 37
+			expect(t.computeFinalScore(50, 0)).toBe(37);
+			// Final with wpm=100: floor(37 * 2.0) = 74
+			expect(t.computeFinalScore(100, 0)).toBe(74);
+		});
+	});
+
 	describe("end-to-end", () => {
 		it("typing a full text correctly produces expected stats", () => {
 			const words = ["the", "cat"];

@@ -162,8 +162,10 @@ export class Matchmaking {
 
 		switch (msg.type) {
 			case "keystroke":
-        console.log("key", msg);
-				room.handleKeystroke(userId, msg as never);
+				room.handleKeystroke(userId, msg as never, msg.t as number);
+				break;
+			case "pong":
+				room.handlePong(userId, msg.t as number);
 				break;
 		}
 	}

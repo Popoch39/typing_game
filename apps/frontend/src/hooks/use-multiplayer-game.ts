@@ -70,6 +70,9 @@ export function useMultiplayerGame() {
 			wpm: selfStats.wpm,
 			rawWpm: selfStats.rawWpm,
 			accuracy: selfStats.accuracy,
+			score: selfStats.score,
+			combo: selfStats.combo,
+			lastWordScore: selfStats.lastWordScore,
 		});
 	}, [mp.selfStats]);
 

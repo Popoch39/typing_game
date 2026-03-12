@@ -4,7 +4,8 @@
 	"private": true,
 	"exports": {
 		".": "./src/index.ts",
-		"./ws-protocol": "./src/ws-protocol.ts"
+		"./ws-protocol": "./src/ws-protocol.ts",
+		"./scoring-engine": "./src/scoring-engine.ts"
 	},
 	"devDependencies": {
 		"@repo/typescript-config": "*",

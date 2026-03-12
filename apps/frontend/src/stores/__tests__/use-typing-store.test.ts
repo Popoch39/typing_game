@@ -108,6 +108,7 @@ describe("useTypingStore", () => {
 		it("handles character input", () => {
 			const firstChar = useTypingStore.getState().words[0].word[0];
 			useTypingStore.getState().handleKeyPress(createKeyEvent(firstChar));
+			useTypingStore.getState().syncFromEngine();
 
 			expect(useTypingStore.getState().currentCharIndex).toBe(1);
 		});
@@ -118,6 +119,7 @@ describe("useTypingStore", () => {
 				useTypingStore.getState().handleKeyPress(createKeyEvent(c));
 			}
 			useTypingStore.getState().handleKeyPress(createKeyEvent(" "));
+			useTypingStore.getState().syncFromEngine();
 
 			expect(useTypingStore.getState().currentWordIndex).toBe(1);
 		});
@@ -125,10 +127,12 @@ describe("useTypingStore", () => {
 		it("handles backspace", () => {
 			const firstChar = useTypingStore.getState().words[0].word[0];
 			useTypingStore.getState().handleKeyPress(createKeyEvent(firstChar));
+			useTypingStore.getState().syncFromEngine();
 			expect(useTypingStore.getState().currentCharIndex).toBe(1);
 
 			const e = createKeyEvent("Backspace");
 			useTypingStore.getState().handleKeyPress(e);
+			useTypingStore.getState().syncFromEngine();
 
 			expect(e.preventDefault).toHaveBeenCalled();
 			expect(useTypingStore.getState().currentCharIndex).toBe(0);
@@ -143,6 +147,7 @@ describe("useTypingStore", () => {
 			useTypingStore
 				.getState()
 				.handleKeyPress(createKeyEvent("Backspace", { ctrlKey: true }));
+			useTypingStore.getState().syncFromEngine();
 
 			expect(useTypingStore.getState().currentCharIndex).toBe(0);
 		});

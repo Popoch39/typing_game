@@ -17,6 +17,12 @@ interface PlayerState {
 	completed: boolean;
 	disconnected: boolean;
 	disconnectTimer: ReturnType<typeof setTimeout> | null;
+	rttSamples: number[];
+	lastKeystrokeTime: number;
+	tolerance: number;
+	score: number;
+	combo: number;
+	completedAt: number | null;
 }
 
 export class GameRoom {
@@ -29,6 +35,7 @@ export class GameRoom {
 	private gameStartTime = 0;
 	private gameTimer: ReturnType<typeof setTimeout> | null = null;
 	private countdownTimers: ReturnType<typeof setTimeout>[] = [];
+	private pingInterval: ReturnType<typeof setInterval> | null = null;
 	private onDestroy: (roomId: string) => void;
 
 	constructor(
@@ -82,6 +89,12 @@ export class GameRoom {
 			completed: false,
 			disconnected: false,
 			disconnectTimer: null,
+			rttSamples: [],
+			lastKeystrokeTime: 0,
+			tolerance: 500,
+			score: 0,
+			combo: 1.0,
+			completedAt: null,
 		});
 
 		if (this.players.size === 2) {
@@ -162,6 +175,17 @@ export class GameRoom {
 		this.onDestroy(this.id);
 	}
 
+	handlePong(userId: string, serverT: number) {
+		const ps = this.players.get(userId);
+		if (!ps) return;
+		if (this.state !== "countdown" && this.state !== "playing") return;
+
+		const rtt = Date.now() - serverT;
+		ps.rttSamples.push(rtt);
+		if (ps.rttSamples.length > 10) ps.rttSamples.shift();
+		ps.tolerance = Math.max(...ps.rttSamples) + 200;
+	}
+
 	handleKeystroke(
 		userId: string,
 		data:
@@ -169,6 +193,7 @@ export class GameRoom {
 			| { key: "space" }
 			| { key: "backspace" }
 			| { key: "ctrl_backspace" },
+		clientTime: number = Date.now(),
 	) {
 		if (this.state !== "playing") return;
 
@@ -190,10 +215,21 @@ export class GameRoom {
 				break;
 		}
 
-		const stats = ps.tracker.getStats(Date.now());
+		let t = clientTime;
+		const now = Date.now();
+		let corrected = false;
+		if (t < this.gameStartTime || t > now + ps.tolerance || t < ps.lastKeystrokeTime) {
+			t = now;
+			corrected = true;
+		}
+		ps.lastKeystrokeTime = t;
+
+		const stats = ps.tracker.getStats(t);
 		ps.wpm = stats.wpm;
 		ps.accuracy = stats.accuracy;
 		ps.rawWpm = stats.rawWpm;
+		ps.score = stats.score;
+		ps.combo = stats.combo;
 
 		// Send authoritative stats back to the player
 		this.send(ps.player, {
@@ -203,6 +239,10 @@ export class GameRoom {
 			accuracy: stats.accuracy,
 			wordIndex: stats.wordIndex,
 			charIndex: stats.charIndex,
+			timeCorrection: corrected ? t - clientTime : 0,
+			score: stats.score,
+			combo: stats.combo,
+			lastWordScore: stats.lastWordScore,
 		});
 
 		// Send progress to opponent
@@ -214,16 +254,25 @@ export class GameRoom {
 				charIndex: stats.charIndex,
 				wpm: stats.wpm,
 				accuracy: stats.accuracy,
+				score: stats.score,
+				combo: stats.combo,
 			});
 		}
 
 		// Handle completion
 		if (stats.completed) {
 			ps.completed = true;
+			ps.completedAt = ps.tracker.completedAt;
+
+			// Compute final score with time bonus
+			const elapsed = (t - this.gameStartTime) / 1000;
+			const remainingSeconds = Math.max(0, this.duration - elapsed);
+			ps.score = ps.tracker.computeFinalScore(stats.wpm, remainingSeconds);
+
 			log.room(
 				"complete",
 				this.id,
-				`${ps.player.name} ${stats.wpm}wpm ${stats.accuracy}%`,
+				`${ps.player.name} ${stats.wpm}wpm ${stats.accuracy}% score=${ps.score}`,
 			);
 
 			this.send(ps.player, {
@@ -231,6 +280,7 @@ export class GameRoom {
 				wpm: stats.wpm,
 				rawWpm: stats.rawWpm,
 				accuracy: stats.accuracy,
+				score: ps.score,
 			});
 
 			if (opponent) {
@@ -261,6 +311,7 @@ export class GameRoom {
 		for (const [i, val] of values.entries()) {
 			const timer = setTimeout(() => {
 				this.broadcast({ type: "countdown", value: val });
+				this.broadcast({ type: "ping", t: Date.now() });
 			}, i * 1000);
 			this.countdownTimers.push(timer);
 		}
@@ -288,6 +339,10 @@ export class GameRoom {
 			startTime: this.gameStartTime,
 		});
 
+		this.pingInterval = setInterval(() => {
+			this.broadcast({ type: "ping", t: Date.now() });
+		}, 5000);
+
 		this.gameTimer = setTimeout(() => {
 			this.finishGame();
 		}, this.duration * 1000);
@@ -302,23 +357,37 @@ export class GameRoom {
 			this.gameTimer = null;
 		}
 
+		// Compute final scores for players who didn't complete (timer ran out)
+		const now = Date.now();
+		for (const ps of this.players.values()) {
+			if (!ps.completed && ps.tracker) {
+				const stats = ps.tracker.getStats(now);
+				ps.wpm = stats.wpm;
+				ps.accuracy = stats.accuracy;
+				ps.rawWpm = stats.rawWpm;
+				// No time bonus for non-completers (remainingSeconds = 0)
+				ps.score = ps.tracker.computeFinalScore(stats.wpm, 0);
+			}
+		}
+
 		const players = [...this.players.values()];
 		let winner: string | null = null;
 
-		// Both completed → highest WPM wins
-		if (players.length >= 2 && players.every((p) => p.completed)) {
-			const sorted = players.sort((a, b) => b.wpm - a.wpm);
-			winner =
-				sorted[0]!.wpm === sorted[1]!.wpm ? null : sorted[0]!.player.userId;
-		} else if (players.length >= 2) {
-			// One completed → they win
+		// Winner = highest score
+		if (players.length >= 2) {
 			const completer = players.find((p) => p.completed);
-			if (completer) winner = completer.player.userId;
-			// Neither → highest WPM
-			else {
-				const sorted = players.sort((a, b) => b.wpm - a.wpm);
+			const nonCompleter = players.find((p) => !p.completed);
+
+			if (completer && nonCompleter) {
+				// One completed → they win
+				winner = completer.player.userId;
+			} else {
+				// Both completed or neither → highest score
+				const sorted = players.sort((a, b) => b.score - a.score);
 				winner =
-					sorted[0]!.wpm === sorted[1]!.wpm ? null : sorted[0]!.player.userId;
+					sorted[0]!.score === sorted[1]!.score
+						? null
+						: sorted[0]!.player.userId;
 			}
 		}
 
@@ -341,6 +410,8 @@ export class GameRoom {
 			accuracy: ps.accuracy,
 			rawWpm: ps.rawWpm,
 			completed: ps.completed,
+			score: ps.score,
+			completedAt: ps.completedAt ?? undefined,
 		}));
 	}
 
@@ -372,6 +443,10 @@ export class GameRoom {
 		if (this.gameTimer) {
 			clearTimeout(this.gameTimer);
 			this.gameTimer = null;
+		}
+		if (this.pingInterval) {
+			clearInterval(this.pingInterval);
+			this.pingInterval = null;
 		}
 		for (const ps of this.players.values()) {
 			if (ps.disconnectTimer) clearTimeout(ps.disconnectTimer);

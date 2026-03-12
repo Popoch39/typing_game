@@ -4,10 +4,11 @@ export type ClientMessage =
 	| { type: "leave_queue" }
 	| { type: "create_room"; duration: number }
 	| { type: "join_room"; code: string }
-	| { type: "keystroke"; key: "char"; char: string }
-	| { type: "keystroke"; key: "space" }
-	| { type: "keystroke"; key: "backspace" }
-	| { type: "keystroke"; key: "ctrl_backspace" };
+	| { type: "keystroke"; key: "char"; char: string; t: number }
+	| { type: "keystroke"; key: "space"; t: number }
+	| { type: "keystroke"; key: "backspace"; t: number }
+	| { type: "keystroke"; key: "ctrl_backspace"; t: number }
+	| { type: "pong"; t: number };
 
 // Server → Client
 export type ServerMessage =
@@ -29,12 +30,17 @@ export type ServerMessage =
 			accuracy: number;
 			wordIndex: number;
 			charIndex: number;
+			timeCorrection: number;
+			score: number;
+			combo: number;
+			lastWordScore: number;
 	  }
 	| {
 			type: "self_complete";
 			wpm: number;
 			rawWpm: number;
 			accuracy: number;
+			score: number;
 	  }
 	| {
 			type: "opponent_progress";
@@ -42,6 +48,8 @@ export type ServerMessage =
 			charIndex: number;
 			wpm: number;
 			accuracy: number;
+			score: number;
+			combo: number;
 	  }
 	| {
 			type: "opponent_complete";
@@ -52,7 +60,8 @@ export type ServerMessage =
 	| { type: "game_result"; winner: string | null; players: PlayerResult[] }
 	| { type: "opponent_disconnected" }
 	| { type: "opponent_reconnected" }
-	| { type: "error"; message: string };
+	| { type: "error"; message: string }
+	| { type: "ping"; t: number };
 
 export interface PlayerResult {
 	userId: string;
@@ -61,4 +70,6 @@ export interface PlayerResult {
 	accuracy: number;
 	rawWpm: number;
 	completed: boolean;
+	score: number;
+	completedAt?: number;
 }

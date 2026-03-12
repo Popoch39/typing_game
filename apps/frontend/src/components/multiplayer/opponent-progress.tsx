@@ -1,6 +1,14 @@
 "use client";
 
 import { useMultiplayerStore } from "@/hooks/use-multiplayer";
+import { cn } from "@/lib/utils";
+
+function getComboColor(combo: number): string {
+	if (combo >= 5.0) return "text-red-500";
+	if (combo >= 3.5) return "text-orange-500";
+	if (combo >= 2.0) return "text-yellow-500";
+	return "text-muted-foreground";
+}
 
 export function OpponentProgress() {
 	const opponent = useMultiplayerStore((s) => s.opponent);
@@ -18,7 +26,11 @@ export function OpponentProgress() {
 					{opponent.name || "Opponent"}
 				</span>
 				<span className="font-mono text-muted-foreground">
-					{opponent.wpm} wpm · {opponent.accuracy}%
+					{opponent.wpm} wpm · {opponent.accuracy}% ·{" "}
+					<span className="text-foreground">{opponent.score}</span>{" "}
+					<span className={cn("font-bold", getComboColor(opponent.combo))}>
+						{opponent.combo.toFixed(2)}x
+					</span>
 				</span>
 			</div>
 			<div className="h-2 w-full overflow-hidden rounded-full bg-muted">
@@ -29,7 +41,7 @@ export function OpponentProgress() {
 			</div>
 			{opponent.completed && (
 				<p className="text-center text-xs text-muted-foreground">
-					Opponent finished — {opponent.wpm} wpm
+					Opponent finished — {opponent.wpm} wpm · {opponent.score} pts
 				</p>
 			)}
 		</div>

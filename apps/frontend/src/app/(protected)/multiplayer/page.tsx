@@ -89,6 +89,20 @@ export default function MultiplayerPage() {
                     <span className="tabular-nums">
                       {typingStore.accuracy}%
                     </span>
+                    <span className="tabular-nums">{typingStore.score}</span>
+                    <span
+                      className={`tabular-nums text-lg font-bold transition-all duration-200 ${
+                        typingStore.combo >= 5.0
+                          ? "text-red-500 animate-pulse"
+                          : typingStore.combo >= 3.5
+                            ? "text-orange-500"
+                            : typingStore.combo >= 2.0
+                              ? "text-yellow-500"
+                              : "text-muted-foreground"
+                      }`}
+                    >
+                      {typingStore.combo.toFixed(2)}x
+                    </span>
                   </>
                 )}
               </div>
@@ -98,6 +112,13 @@ export default function MultiplayerPage() {
               <p className="text-center text-sm text-muted-foreground">
                 Start typing to begin...
               </p>
+            )}
+            {process.env.NODE_ENV !== "production" && mp.selfStats && (
+              <div className="rounded-md border border-dashed border-yellow-500/50 bg-yellow-500/5 px-3 py-2 font-mono text-xs text-yellow-600 dark:text-yellow-400">
+                <span className="font-semibold">DEBUG</span>
+                {" | "}
+                time correction: <span className={mp.selfStats.timeCorrection !== 0 ? "text-red-500 font-bold" : ""}>{mp.selfStats.timeCorrection}ms</span>
+              </div>
             )}
           </div>
         )}

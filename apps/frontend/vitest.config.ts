@@ -5,6 +5,9 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      "@repo/shared/scoring-engine": path.resolve(__dirname, "../../packages/shared/src/scoring-engine.ts"),
+      "@repo/shared/ws-protocol": path.resolve(__dirname, "../../packages/shared/src/ws-protocol.ts"),
+      "@repo/shared": path.resolve(__dirname, "../../packages/shared/src/index.ts"),
     },
   },
   test: {

@@ -50,10 +50,16 @@ export function GameResultScreen({
 					>
 						<p className="text-sm font-medium">You</p>
 						<p className="font-mono text-3xl font-bold text-primary">
-							{myResult?.wpm ?? 0}
+							{myResult?.score ?? 0}
 						</p>
-						<p className="text-xs text-muted-foreground">wpm</p>
-						<div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+						<p className="text-xs text-muted-foreground">score</p>
+						<div className="grid grid-cols-3 gap-1 text-xs text-muted-foreground">
+							<div>
+								<p className="font-mono font-semibold text-foreground">
+									{myResult?.wpm ?? 0}
+								</p>
+								<p>wpm</p>
+							</div>
 							<div>
 								<p className="font-mono font-semibold text-foreground">
 									{myResult?.rawWpm ?? 0}
@@ -80,10 +86,16 @@ export function GameResultScreen({
 							{oppResult?.name || "Opponent"}
 						</p>
 						<p className="font-mono text-3xl font-bold text-primary">
-							{oppResult?.wpm ?? 0}
+							{oppResult?.score ?? 0}
 						</p>
-						<p className="text-xs text-muted-foreground">wpm</p>
-						<div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+						<p className="text-xs text-muted-foreground">score</p>
+						<div className="grid grid-cols-3 gap-1 text-xs text-muted-foreground">
+							<div>
+								<p className="font-mono font-semibold text-foreground">
+									{oppResult?.wpm ?? 0}
+								</p>
+								<p>wpm</p>
+							</div>
 							<div>
 								<p className="font-mono font-semibold text-foreground">
 									{oppResult?.rawWpm ?? 0}

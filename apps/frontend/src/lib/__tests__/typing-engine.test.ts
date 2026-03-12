@@ -69,6 +69,7 @@ describe("TypingEngine", () => {
 		it("marks correct characters", () => {
 			const { engine, callbacks } = createEngine(["hi"]);
 			engine.handleChar("h");
+			vi.advanceTimersByTime(16); // flush rAF
 
 			const state = engine.getState();
 			expect(state.words[0].chars[0].state).toBe("correct");
@@ -141,6 +142,9 @@ describe("TypingEngine", () => {
 			engine.handleChar("h");
 			engine.handleChar("i");
 			engine.handleSpace();
+
+			// Flush rAF (scheduleStateChange uses requestAnimationFrame)
+			vi.advanceTimersByTime(16);
 
 			const state = engine.getState();
 			expect(state.currentWordIndex).toBe(1);
@@ -375,6 +379,95 @@ describe("TypingEngine", () => {
 			const { engine } = createEngine([]);
 			engine.handleCtrlBackspace();
 			expect(engine.getState().currentCharIndex).toBe(0);
+		});
+	});
+
+	describe("hadError tracking", () => {
+		it("starts with hadError = false", () => {
+			const { engine } = createEngine(["hello"]);
+			expect(engine.getState().words[0].hadError).toBe(false);
+		});
+
+		it("sets hadError = true on incorrect char", () => {
+			const { engine } = createEngine(["hello"]);
+			engine.handleChar("x");
+			expect(engine.getState().words[0].hadError).toBe(true);
+		});
+
+		it("sets hadError = true on extra char", () => {
+			const { engine } = createEngine(["ab"]);
+			engine.handleChar("a");
+			engine.handleChar("b");
+			engine.handleChar("x"); // extra
+			expect(engine.getState().words[0].hadError).toBe(true);
+		});
+
+		it("sets hadError = true on backspace", () => {
+			const { engine } = createEngine(["hello"]);
+			engine.handleChar("h");
+			engine.handleBackspace();
+			expect(engine.getState().words[0].hadError).toBe(true);
+		});
+
+		it("does NOT reset hadError on regular backspace", () => {
+			const { engine } = createEngine(["hello"]);
+			engine.handleChar("x"); // incorrect → hadError = true
+			engine.handleBackspace();
+			expect(engine.getState().words[0].hadError).toBe(true);
+		});
+
+		it("resets hadError on ctrl+backspace (fresh start)", () => {
+			const { engine } = createEngine(["hello"]);
+			engine.handleChar("x"); // incorrect → hadError = true
+			engine.handleCtrlBackspace();
+			expect(engine.getState().words[0].hadError).toBe(false);
+		});
+
+		it("keeps hadError = false for perfectly typed word", () => {
+			const { engine } = createEngine(["hi", "ok"]);
+			engine.handleChar("h");
+			engine.handleChar("i");
+			expect(engine.getState().words[0].hadError).toBe(false);
+		});
+
+		it("each word tracks hadError independently", () => {
+			const { engine } = createEngine(["hi", "ok"]);
+			engine.handleChar("x"); // incorrect on word 0
+			engine.handleChar("i");
+			engine.handleSpace();
+			engine.handleChar("o");
+			engine.handleChar("k");
+			expect(engine.getState().words[0].hadError).toBe(true);
+			expect(engine.getState().words[1].hadError).toBe(false);
+		});
+	});
+
+	describe("scoring integration", () => {
+		it("starts with score=0, combo=1.0", () => {
+			const { engine } = createEngine(["hello"]);
+			const state = engine.getState();
+			expect(state.score).toBe(0);
+			expect(state.combo).toBe(1.0);
+			expect(state.lastWordScore).toBe(0);
+		});
+
+		it("scores word on space", () => {
+			const { engine } = createEngine(["hello", "world"]);
+			for (const c of "hello") engine.handleChar(c);
+			engine.handleSpace();
+			const state = engine.getState();
+			expect(state.score).toBeGreaterThan(0);
+			expect(state.lastWordScore).toBeGreaterThan(0);
+		});
+
+		it("resets scoring on engine reset", () => {
+			const { engine } = createEngine(["hello", "world"]);
+			for (const c of "hello") engine.handleChar(c);
+			engine.handleSpace();
+			expect(engine.getState().score).toBeGreaterThan(0);
+			engine.reset();
+			expect(engine.getState().score).toBe(0);
+			expect(engine.getState().combo).toBe(1.0);
 		});
 	});
 

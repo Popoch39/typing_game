@@ -23,6 +23,8 @@ export interface OpponentState {
 	accuracy: number;
 	rawWpm: number;
 	completed: boolean;
+	score: number;
+	combo: number;
 }
 
 export interface SelfStats {
@@ -31,6 +33,10 @@ export interface SelfStats {
 	accuracy: number;
 	wordIndex: number;
 	charIndex: number;
+	timeCorrection: number;
+	score: number;
+	combo: number;
+	lastWordScore: number;
 }
 
 export interface MultiplayerState {
@@ -191,7 +197,7 @@ export class MultiplayerClient {
 			| { key: "backspace" }
 			| { key: "ctrl_backspace" },
 	): void {
-		this.send({ type: "keystroke", ...data } as ClientMessage);
+		this.send({ type: "keystroke", ...data, t: Date.now() } as ClientMessage);
 	}
 
 	getState(): MultiplayerState {
@@ -227,6 +233,8 @@ export class MultiplayerClient {
 						accuracy: 100,
 						rawWpm: 0,
 						completed: false,
+						score: 0,
+						combo: 1.0,
 					},
 					status: "in_room",
 				});
@@ -241,6 +249,8 @@ export class MultiplayerClient {
 						accuracy: 100,
 						rawWpm: 0,
 						completed: false,
+						score: 0,
+						combo: 1.0,
 					},
 					status: "countdown",
 				});
@@ -266,6 +276,10 @@ export class MultiplayerClient {
 						accuracy: msg.accuracy,
 						wordIndex: msg.wordIndex,
 						charIndex: msg.charIndex,
+						timeCorrection: msg.timeCorrection,
+						score: msg.score,
+						combo: msg.combo,
+						lastWordScore: msg.lastWordScore,
 					},
 				});
 				break;
@@ -278,6 +292,10 @@ export class MultiplayerClient {
 						accuracy: msg.accuracy,
 						wordIndex: this.state.selfStats?.wordIndex ?? 0,
 						charIndex: this.state.selfStats?.charIndex ?? 0,
+						timeCorrection: this.state.selfStats?.timeCorrection ?? 0,
+						score: msg.score,
+						combo: this.state.selfStats?.combo ?? 1.0,
+						lastWordScore: this.state.selfStats?.lastWordScore ?? 0,
 					},
 				});
 				break;
@@ -293,6 +311,8 @@ export class MultiplayerClient {
 								charIndex: msg.charIndex,
 								wpm: msg.wpm,
 								accuracy: msg.accuracy,
+								score: msg.score,
+								combo: msg.combo,
 							},
 				});
 				break;
@@ -314,6 +334,8 @@ export class MultiplayerClient {
 								accuracy: msg.accuracy,
 								rawWpm: msg.rawWpm,
 								completed: true,
+								score: 0,
+								combo: 1.0,
 							},
 				});
 				break;
@@ -328,6 +350,9 @@ export class MultiplayerClient {
 				break;
 			case "opponent_reconnected":
 				this.setState({ opponentDisconnected: false });
+				break;
+			case "ping":
+				this.send({ type: "pong", t: (msg as any).t } as ClientMessage);
 				break;
 			case "error":
 				this.setState({ error: msg.message });

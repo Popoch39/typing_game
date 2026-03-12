@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
 	reactCompiler: true,
-	transpilePackages: ["next-themes"],
+	transpilePackages: ["next-themes", "@repo/shared"],
 	env: {
 		NEXT_PUBLIC_WS_URL:
 			process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:3002",

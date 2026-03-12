@@ -84,6 +84,7 @@ const app = new Elysia()
 					matchmaking.joinRoom(player, msg.code);
 					break;
 				case "keystroke":
+				case "pong":
 					matchmaking.handleMessage(player.userId, msg);
 					break;
 			}

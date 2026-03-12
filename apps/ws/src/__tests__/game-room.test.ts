@@ -34,9 +34,9 @@ function getWords(player: Player): string[] {
 function typeAllWords(room: GameRoom, userId: string, words: string[]) {
 	for (const word of words) {
 		for (const ch of word) {
-			room.handleKeystroke(userId, { key: "char", char: ch });
+			room.handleKeystroke(userId, { key: "char", char: ch }, Date.now());
 		}
-		room.handleKeystroke(userId, { key: "space" });
+		room.handleKeystroke(userId, { key: "space" }, Date.now());
 	}
 }
 
@@ -188,14 +188,14 @@ describe("GameRoom", () => {
 		it("is no-op when not playing", () => {
 			const p1 = createPlayer("p1", "Alice");
 			room.addPlayer(p1);
-			room.handleKeystroke("p1", { key: "char", char: "a" });
+			room.handleKeystroke("p1", { key: "char", char: "a" }, Date.now());
 			expect(sentOfType(p1, "self_stats")).toHaveLength(0);
 		});
 
 		it("routes char keystroke and sends self_stats + opponent_progress", async () => {
 			const { p1, p2 } = await setupPlayingRoom();
 
-			room.handleKeystroke("p1", { key: "char", char: "a" });
+			room.handleKeystroke("p1", { key: "char", char: "a" }, Date.now());
 
 			expect(sentOfType(p1, "self_stats").length).toBeGreaterThan(0);
 			expect(sentOfType(p2, "opponent_progress").length).toBeGreaterThan(0);
@@ -203,27 +203,27 @@ describe("GameRoom", () => {
 
 		it("routes space keystroke", async () => {
 			const { p1 } = await setupPlayingRoom();
-			room.handleKeystroke("p1", { key: "space" });
+			room.handleKeystroke("p1", { key: "space" }, Date.now());
 			expect(sentOfType(p1, "self_stats").length).toBeGreaterThan(0);
 		}, 10_000);
 
 		it("routes backspace keystroke", async () => {
 			const { p1 } = await setupPlayingRoom();
-			room.handleKeystroke("p1", { key: "char", char: "a" });
-			room.handleKeystroke("p1", { key: "backspace" });
+			room.handleKeystroke("p1", { key: "char", char: "a" }, Date.now());
+			room.handleKeystroke("p1", { key: "backspace" }, Date.now());
 			expect(sentOfType(p1, "self_stats").length).toBe(2);
 		}, 10_000);
 
 		it("routes ctrl_backspace keystroke", async () => {
 			const { p1 } = await setupPlayingRoom();
-			room.handleKeystroke("p1", { key: "char", char: "a" });
-			room.handleKeystroke("p1", { key: "ctrl_backspace" });
+			room.handleKeystroke("p1", { key: "char", char: "a" }, Date.now());
+			room.handleKeystroke("p1", { key: "ctrl_backspace" }, Date.now());
 			expect(sentOfType(p1, "self_stats").length).toBe(2);
 		}, 10_000);
 
 		it("ignores keystrokes from unknown player", async () => {
 			await setupPlayingRoom();
-			room.handleKeystroke("unknown", { key: "char", char: "a" });
+			room.handleKeystroke("unknown", { key: "char", char: "a" }, Date.now());
 		}, 10_000);
 
 		it("ignores keystrokes from completed player", async () => {
@@ -233,7 +233,7 @@ describe("GameRoom", () => {
 			expect(sentOfType(p1, "self_complete")).toHaveLength(1);
 
 			const countBefore = sentOfType(p1, "self_stats").length;
-			room.handleKeystroke("p1", { key: "char", char: "x" });
+			room.handleKeystroke("p1", { key: "char", char: "x" }, Date.now());
 			expect(sentOfType(p1, "self_stats").length).toBe(countBefore);
 		}, 10_000);
 
@@ -281,7 +281,7 @@ describe("GameRoom", () => {
 	});
 
 	describe("finishGame", () => {
-		it("determines winner by WPM when both complete", async () => {
+		it("determines winner by score when both complete", async () => {
 			const p1 = createPlayer("p1", "Alice");
 			const p2 = createPlayer("p2", "Bob");
 			room.addPlayer(p1);
@@ -364,7 +364,7 @@ describe("GameRoom", () => {
 			expect(sentOfType(p1, "game_result").length).toBe(count1);
 		}, 10_000);
 
-		it("determines winner by WPM when neither completes (timer)", async () => {
+		it("determines winner by score when neither completes (timer)", async () => {
 			const shortRoom = new GameRoom("room-wpm", 1, destroyMock);
 			const p1 = createPlayer("p1", "Alice");
 			const p2 = createPlayer("p2", "Bob");
@@ -374,10 +374,11 @@ describe("GameRoom", () => {
 			await waitForCountdown();
 			const words = getWords(p1);
 
-			// p1 types more chars than p2
+			// p1 types a word + space to get a score; p2 types nothing
 			for (const ch of words[0]!) {
-				shortRoom.handleKeystroke("p1", { key: "char", char: ch });
+				shortRoom.handleKeystroke("p1", { key: "char", char: ch }, Date.now());
 			}
+			shortRoom.handleKeystroke("p1", { key: "space" }, Date.now());
 
 			// Wait for timer
 			await new Promise((r) => setTimeout(r, 1200));
@@ -397,6 +398,100 @@ describe("GameRoom", () => {
 
 		it("code is null by default", () => {
 			expect(room.code).toBeNull();
+		});
+	});
+
+	describe("client timestamp validation", () => {
+		async function setupPlayingRoom() {
+			const p1 = createPlayer("p1", "Alice");
+			const p2 = createPlayer("p2", "Bob");
+			room.addPlayer(p1);
+			room.addPlayer(p2);
+			await waitForCountdown();
+			expect(room.roomState).toBe("playing");
+			return { p1, p2, words: getWords(p1) };
+		}
+
+		it("uses valid client timestamp for stats", async () => {
+			const { p1 } = await setupPlayingRoom();
+			const t = Date.now();
+			room.handleKeystroke("p1", { key: "char", char: "a" }, t);
+			const stats = sentOfType(p1, "self_stats");
+			expect(stats.length).toBeGreaterThan(0);
+		}, 10_000);
+
+		it("falls back to server time when timestamp is before gameStartTime", async () => {
+			const { p1 } = await setupPlayingRoom();
+			room.handleKeystroke("p1", { key: "char", char: "a" }, 1000);
+			const stats = sentOfType(p1, "self_stats");
+			expect(stats.length).toBeGreaterThan(0);
+		}, 10_000);
+
+		it("falls back to server time when timestamp is too far in the future", async () => {
+			const { p1 } = await setupPlayingRoom();
+			room.handleKeystroke("p1", { key: "char", char: "a" }, Date.now() + 999999);
+			const stats = sentOfType(p1, "self_stats");
+			expect(stats.length).toBeGreaterThan(0);
+		}, 10_000);
+
+		it("falls back to server time on non-monotonic timestamp", async () => {
+			const { p1 } = await setupPlayingRoom();
+			const t = Date.now();
+			room.handleKeystroke("p1", { key: "char", char: "a" }, t);
+			room.handleKeystroke("p1", { key: "char", char: "b" }, t - 1000);
+			const stats = sentOfType(p1, "self_stats");
+			expect(stats.length).toBe(2);
+		}, 10_000);
+	});
+
+	describe("ping/pong RTT measurement", () => {
+		it("handlePong updates rttSamples and tolerance", async () => {
+			const p1 = createPlayer("p1", "Alice");
+			const p2 = createPlayer("p2", "Bob");
+			room.addPlayer(p1);
+			room.addPlayer(p2);
+			expect(room.roomState).toBe("countdown");
+
+			const serverT = Date.now() - 50;
+			room.handlePong("p1", serverT);
+
+			const serverT2 = Date.now() - 100;
+			room.handlePong("p1", serverT2);
+		});
+
+		it("handlePong is ignored when not in countdown or playing state", () => {
+			const p1 = createPlayer("p1", "Alice");
+			room.addPlayer(p1);
+			expect(room.roomState).toBe("waiting");
+			room.handlePong("p1", Date.now() - 50);
+		});
+
+		it("handlePong keeps rolling window of 10 samples", async () => {
+			const p1 = createPlayer("p1", "Alice");
+			const p2 = createPlayer("p2", "Bob");
+			room.addPlayer(p1);
+			room.addPlayer(p2);
+			await waitForCountdown();
+
+			for (let i = 0; i < 15; i++) {
+				room.handlePong("p1", Date.now() - 30);
+			}
+		}, 10_000);
+
+		it("sends ping messages during countdown", () => {
+			const p1 = createPlayer("p1", "Alice");
+			const p2 = createPlayer("p2", "Bob");
+			room.addPlayer(p1);
+			room.addPlayer(p2);
+
+			return new Promise<void>((resolve) => {
+				setTimeout(() => {
+					const pings = sentOfType(p1, "ping");
+					expect(pings.length).toBeGreaterThan(0);
+					expect(pings[0].t).toBeTypeOf("number");
+					resolve();
+				}, 100);
+			});
 		});
 	});
 });
