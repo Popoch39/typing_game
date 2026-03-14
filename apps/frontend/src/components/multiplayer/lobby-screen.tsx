@@ -2,13 +2,8 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import {
-	Card,
-	CardContent,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 const DURATIONS = [15, 30, 60, 120];
@@ -88,19 +83,14 @@ export function LobbyScreen({
 					</Button>
 				) : (
 					<div className="space-y-3">
-						<Button
-							className="w-full"
-							onClick={() => onCreateRoom(duration)}
-						>
+						<Button className="w-full" onClick={() => onCreateRoom(duration)}>
 							Create Room
 						</Button>
 						<div className="flex gap-2">
 							<Input
 								placeholder="Room code"
 								value={roomCode}
-								onChange={(e) =>
-									setRoomCode(e.target.value.toUpperCase())
-								}
+								onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
 								maxLength={6}
 								className="font-mono tracking-widest"
 							/>

@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import {
-	TypingEngine,
 	type EngineState,
+	TypingEngine,
 	type WordState,
 } from "@/lib/typing-engine";
 import { generateWordList } from "@/lib/word-lists";

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Bebas_Neue } from "next/font/google";
+import { Bebas_Neue, Geist, Geist_Mono } from "next/font/google";
 import { QueryProvider } from "@/providers/query-provider";
 import { ThemeProvider } from "@/providers/theme-provider";
 import "./globals.css";

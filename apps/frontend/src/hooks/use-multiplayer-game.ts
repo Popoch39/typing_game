@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useSession } from "@/hooks/use-auth";
 import { useMultiplayer, useMultiplayerStore } from "@/hooks/use-multiplayer";
 import { TypingEngine } from "@/lib/typing-engine";
@@ -35,20 +35,15 @@ export function useMultiplayerGame() {
 		const syncFromEngine = useTypingStore.getState().syncFromEngine;
 		const syncStatsOnly = useTypingStore.getState().syncStatsOnly;
 
-		const engine = new TypingEngine(
-			mp.gameWords,
-			mp.gameDuration,
-			"words",
-			{
-				onStateChange: syncFromEngine,
-				onTick: syncStatsOnly,
-				onComplete: () => {
-					// Local engine completion is ignored in multiplayer —
-					// the server is authoritative via self_complete
-					syncFromEngine();
-				},
+		const engine = new TypingEngine(mp.gameWords, mp.gameDuration, "words", {
+			onStateChange: syncFromEngine,
+			onTick: syncStatsOnly,
+			onComplete: () => {
+				// Local engine completion is ignored in multiplayer —
+				// the server is authoritative via self_complete
+				syncFromEngine();
 			},
-		);
+		});
 
 		engineRef.current = engine;
 		useTypingStore.setState({ engine });
@@ -115,12 +110,7 @@ export function useMultiplayerGame() {
 				e.preventDefault();
 				engine.handleSpace();
 				mp.sendKeystroke({ key: "space" });
-			} else if (
-				e.key.length === 1 &&
-				!e.ctrlKey &&
-				!e.metaKey &&
-				!e.altKey
-			) {
+			} else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
 				engine.handleChar(e.key);
 				mp.sendKeystroke({ key: "char", char: e.key });
 			}

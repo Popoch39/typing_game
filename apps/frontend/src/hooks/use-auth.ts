@@ -1,7 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import type { LoginInput, RegisterInput } from "@/validators/auth";
 
@@ -46,6 +46,17 @@ export function useRegister() {
 		},
 		onSuccess: () => {
 			router.push("/");
+		},
+	});
+}
+
+export function useDiscordLogin() {
+	return useMutation({
+		mutationFn: async () => {
+			await authClient.signIn.social({
+				provider: "discord",
+				callbackURL: "/",
+			});
 		},
 	});
 }

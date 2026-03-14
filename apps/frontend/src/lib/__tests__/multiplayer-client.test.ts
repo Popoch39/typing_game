@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
 	MultiplayerClient,
 	type MultiplayerState,
@@ -45,7 +45,9 @@ class MockWebSocket {
 	}
 
 	simulateMessage(data: unknown) {
-		this.onmessage?.(new MessageEvent("message", { data: JSON.stringify(data) }));
+		this.onmessage?.(
+			new MessageEvent("message", { data: JSON.stringify(data) }),
+		);
 	}
 
 	simulateClose() {
@@ -279,7 +281,11 @@ describe("MultiplayerClient", () => {
 		it("opponent_progress → updates opponent", () => {
 			const { getWs, onStateChange } = connectedClient();
 			// Set up opponent first
-			getWs().simulateMessage({ type: "match_found", opponent: "Bob", roomId: "r" });
+			getWs().simulateMessage({
+				type: "match_found",
+				opponent: "Bob",
+				roomId: "r",
+			});
 			onStateChange.mockClear();
 
 			getWs().simulateMessage({
@@ -311,7 +317,11 @@ describe("MultiplayerClient", () => {
 
 		it("opponent_complete → marks opponent completed", () => {
 			const { getWs, onStateChange } = connectedClient();
-			getWs().simulateMessage({ type: "match_found", opponent: "Bob", roomId: "r" });
+			getWs().simulateMessage({
+				type: "match_found",
+				opponent: "Bob",
+				roomId: "r",
+			});
 			onStateChange.mockClear();
 
 			getWs().simulateMessage({
@@ -367,9 +377,7 @@ describe("MultiplayerClient", () => {
 		it("ignores malformed JSON", () => {
 			const { getWs, onStateChange } = connectedClient();
 			// Directly call onmessage with bad data
-			getWs().onmessage?.(
-				new MessageEvent("message", { data: "not json" }),
-			);
+			getWs().onmessage?.(new MessageEvent("message", { data: "not json" }));
 			expect(onStateChange).not.toHaveBeenCalled();
 		});
 	});

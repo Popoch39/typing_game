@@ -213,7 +213,10 @@ export class TypingEngine {
 		word.completed = true;
 		this.totalCharsTyped++; // count space
 
-		const result = this.scoringEngine.scoreWord(word.word.length, word.hadError);
+		const result = this.scoringEngine.scoreWord(
+			word.word.length,
+			word.hadError,
+		);
 		this.lastWordIsPerfect = result.isPerfect;
 
 		this.currentWordIndex++;
@@ -294,9 +297,7 @@ export class TypingEngine {
 	}
 
 	getState(): EngineState {
-		const elapsed = this.startTime
-			? (Date.now() - this.startTime) / 1000
-			: 0;
+		const elapsed = this.startTime ? (Date.now() - this.startTime) / 1000 : 0;
 		const elapsedMinutes = elapsed / 60;
 
 		return {

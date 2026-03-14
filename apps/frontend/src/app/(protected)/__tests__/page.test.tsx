@@ -1,9 +1,9 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { useTypingStore } from "@/stores/use-typing-store";
 import { renderWithProviders } from "@/test/test-utils";
 import Home from "../page";
-import { useTypingStore } from "@/stores/use-typing-store";
 
 const mockMutate = vi.fn();
 

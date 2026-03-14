@@ -1,19 +1,10 @@
 "use client";
 
-import { useMultiplayerStore } from "@/hooks/use-multiplayer";
 import { Button } from "@/components/ui/button";
-import {
-	Card,
-	CardContent,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useMultiplayerStore } from "@/hooks/use-multiplayer";
 
-export function WaitingScreen({
-	onCancel,
-}: {
-	onCancel: () => void;
-}) {
+export function WaitingScreen({ onCancel }: { onCancel: () => void }) {
 	const status = useMultiplayerStore((s) => s.status);
 	const roomCode = useMultiplayerStore((s) => s.roomCode);
 

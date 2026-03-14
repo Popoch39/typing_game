@@ -1,5 +1,5 @@
-import { type NextRequest, NextResponse } from "next/server";
 import { getSessionCookie } from "better-auth/cookies";
+import { type NextRequest, NextResponse } from "next/server";
 
 export function proxy(request: NextRequest) {
 	const sessionCookie = getSessionCookie(request);
@@ -10,7 +10,7 @@ export function proxy(request: NextRequest) {
 		return NextResponse.redirect(new URL("/", request.url));
 	}
 
-  console.log("laaa", sessionCookie);
+	console.log("laaa", sessionCookie);
 
 	// Not logged in users get redirected to login
 	if (!sessionCookie) {

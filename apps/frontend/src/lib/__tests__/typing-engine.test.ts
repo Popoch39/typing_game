@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { TypingEngine, type EngineCallbacks } from "../typing-engine";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { type EngineCallbacks, TypingEngine } from "../typing-engine";
 
 function createCallbacks(): EngineCallbacks {
 	return {
@@ -202,7 +202,9 @@ describe("TypingEngine", () => {
 
 			const stateBefore = engine.getState();
 			engine.handleSpace();
-			expect(engine.getState().currentWordIndex).toBe(stateBefore.currentWordIndex);
+			expect(engine.getState().currentWordIndex).toBe(
+				stateBefore.currentWordIndex,
+			);
 		});
 
 		it("does nothing when currentWord is undefined", () => {
@@ -700,7 +702,9 @@ describe("TypingEngine", () => {
 			expect(state.incorrectChars).toBe(0);
 			expect(state.totalCharsTyped).toBe(0);
 			expect(state.wpmHistory).toEqual([]);
-			expect(state.words[0].chars.every((c) => c.state === "pending")).toBe(true);
+			expect(state.words[0].chars.every((c) => c.state === "pending")).toBe(
+				true,
+			);
 			expect(callbacks.onStateChange).toHaveBeenCalled();
 		});
 

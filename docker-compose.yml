@@ -26,6 +26,8 @@ services:
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-dev-secret-change-me}
       BETTER_AUTH_URL: http://localhost:3001
       FRONTEND_URL: http://localhost:3000
+      DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID:-}
+      DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET:-}
       PORT: 3001
     volumes:
       - ./apps/api/src:/app/src

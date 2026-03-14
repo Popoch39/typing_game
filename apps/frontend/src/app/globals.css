@@ -4,130 +4,130 @@
 
 /* Work Sans - All variants */
 @font-face {
-  font-family: "Work Sans";
-  src: url("../assets/fonts/WorkSans-Thin.ttf") format("truetype");
-  font-weight: 100;
-  font-style: normal;
-  font-display: swap;
+	font-family: "Work Sans";
+	src: url("../assets/fonts/WorkSans-Thin.ttf") format("truetype");
+	font-weight: 100;
+	font-style: normal;
+	font-display: swap;
 }
 @font-face {
-  font-family: "Work Sans";
-  src: url("../assets/fonts/WorkSans-ThinItalic.ttf") format("truetype");
-  font-weight: 100;
-  font-style: italic;
-  font-display: swap;
+	font-family: "Work Sans";
+	src: url("../assets/fonts/WorkSans-ThinItalic.ttf") format("truetype");
+	font-weight: 100;
+	font-style: italic;
+	font-display: swap;
 }
 @font-face {
-  font-family: "Work Sans";
-  src: url("../assets/fonts/WorkSans-ExtraLight.ttf") format("truetype");
-  font-weight: 200;
-  font-style: normal;
-  font-display: swap;
+	font-family: "Work Sans";
+	src: url("../assets/fonts/WorkSans-ExtraLight.ttf") format("truetype");
+	font-weight: 200;
+	font-style: normal;
+	font-display: swap;
 }
 @font-face {
-  font-family: "Work Sans";
-  src: url("../assets/fonts/WorkSans-ExtraLightItalic.ttf") format("truetype");
-  font-weight: 200;
-  font-style: italic;
-  font-display: swap;
+	font-family: "Work Sans";
+	src: url("../assets/fonts/WorkSans-ExtraLightItalic.ttf") format("truetype");
+	font-weight: 200;
+	font-style: italic;
+	font-display: swap;
 }
 @font-face {
-  font-family: "Work Sans";
-  src: url("../assets/fonts/WorkSans-Light.ttf") format("truetype");
-  font-weight: 300;
-  font-style: normal;
-  font-display: swap;
+	font-family: "Work Sans";
+	src: url("../assets/fonts/WorkSans-Light.ttf") format("truetype");
+	font-weight: 300;
+	font-style: normal;
+	font-display: swap;
 }
 @font-face {
-  font-family: "Work Sans";
-  src: url("../assets/fonts/WorkSans-LightItalic.ttf") format("truetype");
-  font-weight: 300;
-  font-style: italic;
-  font-display: swap;
+	font-family: "Work Sans";
+	src: url("../assets/fonts/WorkSans-LightItalic.ttf") format("truetype");
+	font-weight: 300;
+	font-style: italic;
+	font-display: swap;
 }
 @font-face {
-  font-family: "Work Sans";
-  src: url("../assets/fonts/WorkSans-Regular.ttf") format("truetype");
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
+	font-family: "Work Sans";
+	src: url("../assets/fonts/WorkSans-Regular.ttf") format("truetype");
+	font-weight: 400;
+	font-style: normal;
+	font-display: swap;
 }
 @font-face {
-  font-family: "Work Sans";
-  src: url("../assets/fonts/WorkSans-Italic.ttf") format("truetype");
-  font-weight: 400;
-  font-style: italic;
-  font-display: swap;
+	font-family: "Work Sans";
+	src: url("../assets/fonts/WorkSans-Italic.ttf") format("truetype");
+	font-weight: 400;
+	font-style: italic;
+	font-display: swap;
 }
 @font-face {
-  font-family: "Work Sans";
-  src: url("../assets/fonts/WorkSans-Medium.ttf") format("truetype");
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
+	font-family: "Work Sans";
+	src: url("../assets/fonts/WorkSans-Medium.ttf") format("truetype");
+	font-weight: 500;
+	font-style: normal;
+	font-display: swap;
 }
 @font-face {
-  font-family: "Work Sans";
-  src: url("../assets/fonts/WorkSans-MediumItalic.ttf") format("truetype");
-  font-weight: 500;
-  font-style: italic;
-  font-display: swap;
+	font-family: "Work Sans";
+	src: url("../assets/fonts/WorkSans-MediumItalic.ttf") format("truetype");
+	font-weight: 500;
+	font-style: italic;
+	font-display: swap;
 }
 @font-face {
-  font-family: "Work Sans";
-  src: url("../assets/fonts/WorkSans-SemiBold.ttf") format("truetype");
-  font-weight: 600;
-  font-style: normal;
-  font-display: swap;
+	font-family: "Work Sans";
+	src: url("../assets/fonts/WorkSans-SemiBold.ttf") format("truetype");
+	font-weight: 600;
+	font-style: normal;
+	font-display: swap;
 }
 @font-face {
-  font-family: "Work Sans";
-  src: url("../assets/fonts/WorkSans-SemiBoldItalic.ttf") format("truetype");
-  font-weight: 600;
-  font-style: italic;
-  font-display: swap;
+	font-family: "Work Sans";
+	src: url("../assets/fonts/WorkSans-SemiBoldItalic.ttf") format("truetype");
+	font-weight: 600;
+	font-style: italic;
+	font-display: swap;
 }
 @font-face {
-  font-family: "Work Sans";
-  src: url("../assets/fonts/WorkSans-Bold.ttf") format("truetype");
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
+	font-family: "Work Sans";
+	src: url("../assets/fonts/WorkSans-Bold.ttf") format("truetype");
+	font-weight: 700;
+	font-style: normal;
+	font-display: swap;
 }
 @font-face {
-  font-family: "Work Sans";
-  src: url("../assets/fonts/WorkSans-BoldItalic.ttf") format("truetype");
-  font-weight: 700;
-  font-style: italic;
-  font-display: swap;
+	font-family: "Work Sans";
+	src: url("../assets/fonts/WorkSans-BoldItalic.ttf") format("truetype");
+	font-weight: 700;
+	font-style: italic;
+	font-display: swap;
 }
 @font-face {
-  font-family: "Work Sans";
-  src: url("../assets/fonts/WorkSans-ExtraBold.ttf") format("truetype");
-  font-weight: 800;
-  font-style: normal;
-  font-display: swap;
+	font-family: "Work Sans";
+	src: url("../assets/fonts/WorkSans-ExtraBold.ttf") format("truetype");
+	font-weight: 800;
+	font-style: normal;
+	font-display: swap;
 }
 @font-face {
-  font-family: "Work Sans";
-  src: url("../assets/fonts/WorkSans-ExtraBoldItalic.ttf") format("truetype");
-  font-weight: 800;
-  font-style: italic;
-  font-display: swap;
+	font-family: "Work Sans";
+	src: url("../assets/fonts/WorkSans-ExtraBoldItalic.ttf") format("truetype");
+	font-weight: 800;
+	font-style: italic;
+	font-display: swap;
 }
 @font-face {
-  font-family: "Work Sans";
-  src: url("../assets/fonts/WorkSans-Black.ttf") format("truetype");
-  font-weight: 900;
-  font-style: normal;
-  font-display: swap;
+	font-family: "Work Sans";
+	src: url("../assets/fonts/WorkSans-Black.ttf") format("truetype");
+	font-weight: 900;
+	font-style: normal;
+	font-display: swap;
 }
 @font-face {
-  font-family: "Work Sans";
-  src: url("../assets/fonts/WorkSans-BlackItalic.ttf") format("truetype");
-  font-weight: 900;
-  font-style: italic;
-  font-display: swap;
+	font-family: "Work Sans";
+	src: url("../assets/fonts/WorkSans-BlackItalic.ttf") format("truetype");
+	font-weight: 900;
+	font-style: italic;
+	font-display: swap;
 }
 
 @custom-variant dark (&:is(.dark *));
@@ -217,7 +217,7 @@
 	--card-foreground: oklch(0.985 0 0);
 	--popover: oklch(0.205 0 0);
 	--popover-foreground: oklch(0.985 0 0);
-	--primary: oklch(0.87 0.00 0);
+	--primary: oklch(0.87 0 0);
 	--primary-foreground: oklch(0.205 0 0);
 	--secondary: oklch(0.269 0 0);
 	--secondary-foreground: oklch(0.985 0 0);
@@ -245,69 +245,90 @@
 }
 
 @layer base {
-  * {
-    @apply border-border outline-ring/50;
+	* {
+		@apply border-border outline-ring/50;
 	}
-  body {
-    @apply bg-background text-foreground;
+	body {
+		@apply bg-background text-foreground;
 	}
-  html {
-    @apply font-sans;
+	html {
+		@apply font-sans;
 	}
 }
 
 @keyframes cursor-blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
+	0%,
+	100% {
+		opacity: 1;
+	}
+	50% {
+		opacity: 0;
+	}
 }
 
 .animate-cursor-blink {
-  animation: cursor-blink 1s step-end infinite;
+	animation: cursor-blink 1s step-end infinite;
 }
 
 [data-state="pending"] {
-  color: var(--muted-foreground);
+	color: var(--muted-foreground);
 }
 [data-state="correct"] {
-  color: var(--foreground);
-  animation: flash-correct 250ms ease-out;
+	color: var(--foreground);
+	animation: flash-correct 250ms ease-out;
 }
 [data-state="incorrect"],
 [data-state="extra"] {
-  color: hsl(0 90% 40%) !important;
-  animation: flash-incorrect 100ms ease-out;
+	color: hsl(0 90% 40%) !important;
+	animation: flash-incorrect 100ms ease-out;
 }
 [data-state="missed"] {
-  color: hsl(0 90% 40%) !important;
-  opacity: 0.5;
+	color: hsl(0 90% 40%) !important;
+	opacity: 0.5;
 }
 
 @keyframes flash-correct {
-  0% {
-    color: hsl(142 90% 55%);
-    text-shadow: 0 0 8px hsl(142 90% 55% / 0.6);
-    transform: scale(1.15);
-  }
-  100% {
-    color: var(--foreground);
-    text-shadow: none;
-    transform: scale(1);
-  }
+	0% {
+		color: hsl(142 90% 55%);
+		text-shadow: 0 0 8px hsl(142 90% 55% / 0.6);
+		transform: scale(1.15);
+	}
+	100% {
+		color: var(--foreground);
+		text-shadow: none;
+		transform: scale(1);
+	}
 }
 
 @keyframes flash-incorrect {
-  0% { transform: translateX(-2px); }
-  25% { transform: translateX(2px); }
-  50% { transform: translateX(-2px); }
-  75% { transform: translateX(1px); }
-  100% { transform: translateX(0); }
+	0% {
+		transform: translateX(-2px);
+	}
+	25% {
+		transform: translateX(2px);
+	}
+	50% {
+		transform: translateX(-2px);
+	}
+	75% {
+		transform: translateX(1px);
+	}
+	100% {
+		transform: translateX(0);
+	}
 }
 
 @keyframes score-popup {
-  0% { opacity: 1; transform: translateY(0); }
-  100% { opacity: 0; transform: translateY(-20px); }
+	0% {
+		opacity: 1;
+		transform: translateY(0);
+	}
+	100% {
+		opacity: 0;
+		transform: translateY(-20px);
+	}
 }
 
 .animate-score-popup {
-  animation: score-popup 1s ease-out forwards;
+	animation: score-popup 1s ease-out forwards;
 }

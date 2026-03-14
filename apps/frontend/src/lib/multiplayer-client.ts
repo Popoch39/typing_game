@@ -1,7 +1,7 @@
 import type {
 	ClientMessage,
-	ServerMessage,
 	PlayerResult,
+	ServerMessage,
 } from "@repo/shared/ws-protocol";
 
 // --- Types ---
@@ -87,7 +87,12 @@ const isDev = process.env.NODE_ENV !== "production";
 function log(tag: string, ...args: unknown[]) {
 	if (!isDev) return;
 	const time = new Date().toLocaleTimeString("en-US", { hour12: false });
-	console.log(`%c[ws:${tag}]%c ${time}`, "color:#7c5cfc;font-weight:bold", "color:gray", ...args);
+	console.log(
+		`%c[ws:${tag}]%c ${time}`,
+		"color:#7c5cfc;font-weight:bold",
+		"color:gray",
+		...args,
+	);
 }
 
 // --- Client ---
@@ -148,7 +153,10 @@ export class MultiplayerClient {
 		};
 
 		ws.onclose = (event: CloseEvent) => {
-			log("connect", `closed (code=${event.code}, reason=${event.reason || "none"})`);
+			log(
+				"connect",
+				`closed (code=${event.code}, reason=${event.reason || "none"})`,
+			);
 			if (this.ws === ws) {
 				this.ws = null;
 			}
@@ -211,7 +219,11 @@ export class MultiplayerClient {
 			}
 			this.ws.send(JSON.stringify(msg));
 		} else {
-			log("send", `⚠ dropped (ws ${this.ws ? `readyState=${this.ws.readyState}` : "null"})`, msg.type);
+			log(
+				"send",
+				`⚠ dropped (ws ${this.ws ? `readyState=${this.ws.readyState}` : "null"})`,
+				msg.type,
+			);
 		}
 	}
 

@@ -1,13 +1,10 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useRegister } from "@/hooks/use-auth";
-import { registerSchema, type RegisterInput } from "@/validators/auth";
+import { DiscordIcon } from "@/components/icons/discord";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
 	Card,
 	CardContent,
@@ -16,6 +13,10 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useDiscordLogin, useRegister } from "@/hooks/use-auth";
+import { type RegisterInput, registerSchema } from "@/validators/auth";
 
 export default function RegisterPage() {
 	const {
@@ -27,22 +28,19 @@ export default function RegisterPage() {
 	});
 
 	const signup = useRegister();
+	const discordLogin = useDiscordLogin();
 
 	return (
 		<div className="flex min-h-screen items-center justify-center">
 			<Card className="w-full max-w-md">
 				<CardHeader>
 					<CardTitle className="text-2xl">Inscription</CardTitle>
-					<CardDescription>
-						Créez votre compte pour commencer
-					</CardDescription>
+					<CardDescription>Créez votre compte pour commencer</CardDescription>
 				</CardHeader>
 				<form onSubmit={handleSubmit((data) => signup.mutate(data))}>
 					<CardContent className="space-y-4">
 						{signup.error && (
-							<p className="text-sm text-destructive">
-								{signup.error.message}
-							</p>
+							<p className="text-sm text-destructive">{signup.error.message}</p>
 						)}
 						<div className="space-y-2">
 							<Label htmlFor="name">Nom</Label>
@@ -74,11 +72,7 @@ export default function RegisterPage() {
 						</div>
 						<div className="space-y-2">
 							<Label htmlFor="password">Mot de passe</Label>
-							<Input
-								id="password"
-								type="password"
-								{...register("password")}
-							/>
+							<Input id="password" type="password" {...register("password")} />
 							{errors.password && (
 								<p className="text-sm text-destructive">
 									{errors.password.message}
@@ -86,9 +80,7 @@ export default function RegisterPage() {
 							)}
 						</div>
 						<div className="space-y-2">
-							<Label htmlFor="confirmPassword">
-								Confirmer le mot de passe
-							</Label>
+							<Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
 							<Input
 								id="confirmPassword"
 								type="password"
@@ -109,6 +101,28 @@ export default function RegisterPage() {
 						>
 							{signup.isPending ? "Inscription..." : "S'inscrire"}
 						</Button>
+						<div className="flex w-full items-center gap-4">
+							<div className="h-px flex-1 bg-border" />
+							<span className="text-sm text-muted-foreground">ou</span>
+							<div className="h-px flex-1 bg-border" />
+						</div>
+						<Button
+							type="button"
+							variant="outline"
+							className="w-full"
+							disabled={discordLogin.isPending}
+							onClick={() => discordLogin.mutate()}
+						>
+							<DiscordIcon className="mr-2 h-5 w-5" />
+							{discordLogin.isPending
+								? "Redirection..."
+								: "S'inscrire avec Discord"}
+						</Button>
+						{discordLogin.error && (
+							<p className="text-sm text-destructive">
+								{discordLogin.error.message}
+							</p>
+						)}
 						<p className="text-sm text-muted-foreground">
 							Déjà un compte ?{" "}
 							<Link href="/login" className="text-primary underline">

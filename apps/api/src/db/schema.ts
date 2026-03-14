@@ -1,7 +1,7 @@
 export {
-	users,
-	sessions,
 	accounts,
-	verifications,
 	gameScores,
+	sessions,
+	users,
+	verifications,
 } from "@repo/database/schema";

@@ -1,22 +1,13 @@
 "use client";
 
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useSession } from "@/hooks/use-auth";
 import { useMultiplayerStore } from "@/hooks/use-multiplayer";
-import { Button } from "@/components/ui/button";
-import {
-	Card,
-	CardContent,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import Link from "next/link";
 
-export function GameResultScreen({
-	onPlayAgain,
-}: {
-	onPlayAgain: () => void;
-}) {
+export function GameResultScreen({ onPlayAgain }: { onPlayAgain: () => void }) {
 	const gameResult = useMultiplayerStore((s) => s.gameResult);
 	const { data: session } = useSession();
 
