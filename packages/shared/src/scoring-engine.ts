@@ -31,7 +31,7 @@ export class ScoringEngine {
 
 		// Update combo
 		if (isPerfect) {
-			this.combo = Math.min(5.0, this.combo + 0.25);
+			this.combo = Math.min(3.0, this.combo + 0.25);
 		} else {
 			this.combo = Math.max(1.0, ScoringEngine.roundCombo(this.combo / 2));
 		}
@@ -39,14 +39,16 @@ export class ScoringEngine {
 		return { wordScore, combo: this.combo, isPerfect };
 	}
 
-	computeFinalScore(wpm: number, remainingSeconds: number): number {
-		const wpmMultiplier = Math.max(0.2, wpm / 50);
-		const comboPoints = Math.floor(this.totalScore * wpmMultiplier);
-		const timeBonus =
-			remainingSeconds > 0
-				? Math.floor(remainingSeconds * 10 * wpmMultiplier)
-				: 0;
-		return comboPoints + timeBonus;
+	computeFinalScore(wpm: number, wordsCompleted: number, remainingSeconds: number): number {
+		const wpmBonus = Math.floor(wpm * wordsCompleted * 2);
+		const timeBonus = remainingSeconds > 0 ? Math.floor(remainingSeconds * 10) : 0;
+		return this.totalScore + wpmBonus + timeBonus;
+	}
+
+	skipWord(): WordScoreResult {
+		this.combo = Math.max(1.0, ScoringEngine.roundCombo(this.combo / 2));
+		this.lastWordScore = 0;
+		return { wordScore: 0, combo: this.combo, isPerfect: false };
 	}
 
 	reset(): void {

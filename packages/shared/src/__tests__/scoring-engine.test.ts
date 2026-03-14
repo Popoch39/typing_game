@@ -53,29 +53,29 @@ describe("ScoringEngine", () => {
 			expect(engine.combo).toBe(1.25);
 		});
 
-		it("caps combo at 5.0", () => {
+		it("caps combo at 3.0", () => {
 			for (let i = 0; i < 20; i++) {
 				engine.scoreWord(5, false);
 			}
-			expect(engine.combo).toBe(5.0);
+			expect(engine.combo).toBe(3.0);
 		});
 
 		it("halves combo on error, rounded to 0.25, min 1.0", () => {
-			// Build up combo to 5.0
-			for (let i = 0; i < 16; i++) {
+			// Build up combo to 3.0
+			for (let i = 0; i < 8; i++) {
 				engine.scoreWord(5, false);
 			}
-			expect(engine.combo).toBe(5.0);
+			expect(engine.combo).toBe(3.0);
 
-			// Error: 5.0 / 2 = 2.5
+			// Error: 3.0 / 2 = 1.5
 			engine.scoreWord(5, true);
-			expect(engine.combo).toBe(2.5);
+			expect(engine.combo).toBe(1.5);
 
-			// Error: 2.5 / 2 = 1.25
+			// Error: 1.5 / 2 = 0.75 → round to 0.75 → min 1.0
 			engine.scoreWord(5, true);
-			expect(engine.combo).toBe(1.25);
+			expect(engine.combo).toBe(1.0);
 
-			// Error: 1.25 / 2 = 0.625 → round to 0.75 → min 1.0
+			// Error: still 1.0
 			engine.scoreWord(5, true);
 			expect(engine.combo).toBe(1.0);
 		});
@@ -141,34 +141,82 @@ describe("ScoringEngine", () => {
 	});
 
 	describe("computeFinalScore", () => {
-		it("applies wpm multiplier", () => {
+		it("returns totalScore + wpmBonus when no time remaining", () => {
 			engine.scoreWord(5, false); // totalScore = 37
-			const final = engine.computeFinalScore(60, 0);
-			expect(final).toBe(Math.floor(37 * 1.2)); // 44
+			// wpmBonus = floor(60 * 1 * 2) = 120
+			const final = engine.computeFinalScore(60, 1, 0);
+			expect(final).toBe(37 + 120);
 		});
 
-		it("floors wpm multiplier at 0.2", () => {
+		it("wpmBonus scales with wordsCompleted", () => {
 			engine.scoreWord(5, false); // totalScore = 37
-			const final = engine.computeFinalScore(0, 0);
-			expect(final).toBe(Math.floor(37 * 0.2)); // 7
+			// wpmBonus = floor(50 * 5 * 2) = 500
+			const final = engine.computeFinalScore(50, 5, 0);
+			expect(final).toBe(37 + 500);
 		});
 
-		it("adds time bonus when remaining seconds > 0", () => {
+		it("adds flat time bonus when remaining seconds > 0", () => {
 			engine.scoreWord(5, false); // totalScore = 37
-			const final = engine.computeFinalScore(50, 10);
-			expect(final).toBe(Math.floor(37 * 1.0) + Math.floor(10 * 10 * 1.0)); // 37 + 100 = 137
+			// wpmBonus = floor(50 * 1 * 2) = 100, timeBonus = floor(10 * 10) = 100
+			const final = engine.computeFinalScore(50, 1, 10);
+			expect(final).toBe(37 + 100 + 100);
 		});
 
 		it("no time bonus when remaining seconds = 0", () => {
 			engine.scoreWord(5, false); // totalScore = 37
-			const final = engine.computeFinalScore(50, 0);
-			expect(final).toBe(37);
+			const final = engine.computeFinalScore(50, 1, 0);
+			expect(final).toBe(37 + 100);
 		});
 
-		it("time bonus uses wpm multiplier", () => {
+		it("wpmBonus is 0 when wpm is 0", () => {
 			engine.scoreWord(5, false); // totalScore = 37
-			const final = engine.computeFinalScore(100, 5);
-			expect(final).toBe(74 + 100); // floor(37*2) + floor(5*10*2)
+			const final = engine.computeFinalScore(0, 5, 0);
+			expect(final).toBe(37);
+		});
+	});
+
+	describe("skipWord", () => {
+		it("gives 0 points", () => {
+			const result = engine.skipWord();
+			expect(result.wordScore).toBe(0);
+			expect(result.isPerfect).toBe(false);
+			expect(engine.totalScore).toBe(0);
+		});
+
+		it("halves combo, rounded to 0.25, min 1.0", () => {
+			// Build combo to 3.0
+			for (let i = 0; i < 8; i++) {
+				engine.scoreWord(5, false);
+			}
+			expect(engine.combo).toBe(3.0);
+
+			const result = engine.skipWord();
+			expect(result.combo).toBe(1.5);
+			expect(engine.combo).toBe(1.5);
+		});
+
+		it("does not go below 1.0", () => {
+			engine.skipWord();
+			expect(engine.combo).toBe(1.0);
+
+			engine.skipWord();
+			expect(engine.combo).toBe(1.0);
+		});
+
+		it("sets lastWordScore to 0", () => {
+			engine.scoreWord(5, false); // sets lastWordScore > 0
+			expect(engine.lastWordScore).toBeGreaterThan(0);
+
+			engine.skipWord();
+			expect(engine.lastWordScore).toBe(0);
+		});
+
+		it("does not add to totalScore", () => {
+			engine.scoreWord(5, false);
+			const scoreBefore = engine.totalScore;
+
+			engine.skipWord();
+			expect(engine.totalScore).toBe(scoreBefore);
 		});
 	});
 
