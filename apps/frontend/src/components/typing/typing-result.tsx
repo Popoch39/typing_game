@@ -1,18 +1,22 @@
 "use client";
 
-import { useTypingStore } from "@/stores/use-typing-store";
-import { useSaveScore } from "@/hooks/use-game-scores";
-import {
-	Card,
-	CardContent,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useSaveScore } from "@/hooks/use-game-scores";
+import { useTypingStore } from "@/stores/use-typing-store";
 
 export function TypingResult() {
-	const { wpm, rawWpm, accuracy, duration, mode, correctChars, incorrectChars, totalCharsTyped, reset } =
-		useTypingStore();
+	const {
+		wpm,
+		rawWpm,
+		accuracy,
+		duration,
+		mode,
+		correctChars,
+		incorrectChars,
+		totalCharsTyped,
+		reset,
+	} = useTypingStore();
 	const saveScore = useSaveScore();
 
 	const handleSave = () => {
@@ -35,9 +39,7 @@ export function TypingResult() {
 			</CardHeader>
 			<CardContent className="space-y-6">
 				<div className="text-center">
-					<div className="font-mono text-6xl font-bold text-primary">
-						{wpm}
-					</div>
+					<div className="font-mono text-6xl font-bold text-primary">{wpm}</div>
 					<div className="text-sm text-muted-foreground">wpm</div>
 				</div>
 

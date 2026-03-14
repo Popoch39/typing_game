@@ -4,9 +4,9 @@ import { useMultiplayerStore } from "@/hooks/use-multiplayer";
 import { cn } from "@/lib/utils";
 
 function getComboColor(combo: number): string {
-	if (combo >= 5.0) return "text-red-500";
-	if (combo >= 3.5) return "text-orange-500";
-	if (combo >= 2.0) return "text-yellow-500";
+	if (combo >= 3.0) return "text-red-500";
+	if (combo >= 2.25) return "text-orange-500";
+	if (combo >= 1.75) return "text-yellow-500";
 	return "text-muted-foreground";
 }
 

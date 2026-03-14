@@ -1,8 +1,25 @@
-.PHONY: install up down build dev dev-ws logs ps migrate generate studio clean db-push test-db test test-api test-frontend test-ws bench-ws
+.PHONY: install dev dev-stop up down build logs ps migrate generate studio clean db-push test-db test test-api test-frontend test-ws bench-ws
 
-# Install all dependencies (local + rebuild containers)
+# Install all dependencies
 install:
 	bun install
+
+# ──────────────────────────────────────────────
+# Local dev (Postgres in Docker, apps on host)
+# ──────────────────────────────────────────────
+
+# Start Postgres + all apps locally
+dev:
+	docker compose -f docker-compose.dev.yml up -d --wait
+	bun run dev
+
+# Stop Postgres
+dev-stop:
+	docker compose -f docker-compose.dev.yml down
+
+# ──────────────────────────────────────────────
+# Full Docker stack (all services containerized)
+# ──────────────────────────────────────────────
 
 # Start all services
 up:
@@ -19,6 +36,7 @@ down:
 # Stop and remove volumes
 clean:
 	docker compose down -v
+	docker compose -f docker-compose.dev.yml down -v
 
 # Show logs (all services)
 logs:
@@ -32,34 +50,38 @@ logs-%:
 ps:
 	docker compose ps
 
-# Run database migrations
-migrate:
-	docker compose exec api bun run db:migrate
-
-# Generate migration from schema changes
-generate:
-	docker compose exec api bun run db:generate
-
-# Push schema directly to database (no migration file)
-db-push:
-	docker compose exec api bunx drizzle-kit push
-
-# Run WS server locally (not in Docker)
-dev-ws:
-	cd apps/ws && DATABASE_URL=postgres://postgres:postgres@localhost:5433/typing_game bun --watch src/index.ts
-
-# Open Drizzle Studio
-studio:
-	cd apps/api && DATABASE_URL=postgres://postgres:postgres@localhost:5433/typing_game bun run db:studio
-
 # Restart a specific service (usage: make restart-api)
 restart-%:
 	docker compose restart $*
 
+# ──────────────────────────────────────────────
+# Database
+# ──────────────────────────────────────────────
+
+# Run database migrations
+migrate:
+	cd apps/api && bun run db:migrate
+
+# Generate migration from schema changes
+generate:
+	cd apps/api && bun run db:generate
+
+# Push schema directly to database (no migration file)
+db-push:
+	cd apps/api && bunx drizzle-kit push
+
+# Open Drizzle Studio
+studio:
+	cd apps/api && bun run db:studio
+
 # Create test database
 test-db:
-	docker compose exec postgres psql -U postgres -c "SELECT 1 FROM pg_database WHERE datname = 'typing_game_test'" | grep -q 1 || \
-	docker compose exec postgres psql -U postgres -c "CREATE DATABASE typing_game_test"
+	docker compose -f docker-compose.dev.yml exec postgres psql -U postgres -c "SELECT 1 FROM pg_database WHERE datname = 'typing_game_test'" | grep -q 1 || \
+	docker compose -f docker-compose.dev.yml exec postgres psql -U postgres -c "CREATE DATABASE typing_game_test"
+
+# ──────────────────────────────────────────────
+# Tests
+# ──────────────────────────────────────────────
 
 # Run all tests
 test: test-api test-frontend test-ws

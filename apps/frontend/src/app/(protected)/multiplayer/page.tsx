@@ -3,6 +3,7 @@
 import { useSession, useSignOut } from "@/hooks/use-auth";
 import { useMultiplayerGame } from "@/hooks/use-multiplayer-game";
 import { TypingArea } from "@/components/typing/typing-area";
+import { ComboDisplay } from "@/components/typing/combo-display";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { OpponentProgress } from "@/components/multiplayer/opponent-progress";
@@ -90,24 +91,14 @@ export default function MultiplayerPage() {
                       {typingStore.accuracy}%
                     </span>
                     <span className="tabular-nums">{typingStore.score}</span>
-                    <span
-                      className={`tabular-nums text-lg font-bold transition-all duration-200 ${
-                        typingStore.combo >= 5.0
-                          ? "text-red-500 animate-pulse"
-                          : typingStore.combo >= 3.5
-                            ? "text-orange-500"
-                            : typingStore.combo >= 2.0
-                              ? "text-yellow-500"
-                              : "text-muted-foreground"
-                      }`}
-                    >
-                      {typingStore.combo.toFixed(2)}x
-                    </span>
                   </>
                 )}
               </div>
             </div>
-            <TypingArea />
+            <div className="relative">
+              <ComboDisplay />
+              <TypingArea />
+            </div>
             {!typingStore.isRunning && (
               <p className="text-center text-sm text-muted-foreground">
                 Start typing to begin...

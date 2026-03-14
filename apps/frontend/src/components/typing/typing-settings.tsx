@@ -1,7 +1,7 @@
 "use client";
 
-import { useTypingStore } from "@/stores/use-typing-store";
 import { cn } from "@/lib/utils";
+import { useTypingStore } from "@/stores/use-typing-store";
 
 const DURATIONS = [15, 30, 60, 120];
 

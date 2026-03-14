@@ -179,12 +179,36 @@ export class TypingEngine {
 		const word = this.words[this.currentWordIndex];
 		if (!word) return;
 
+		// No chars typed → skip word, 0 points, combo halved
+		if (this.currentCharIndex === 0) {
+			for (let i = 0; i < word.word.length; i++) {
+				word.chars[i].state = "missed";
+			}
+			this.incorrectChars += word.word.length;
+			word.hadError = true;
+			word.completed = true;
+			this.totalCharsTyped++; // count space
+			this.scoringEngine.skipWord();
+			this.lastWordIsPerfect = false;
+			this.currentWordIndex++;
+			this.currentCharIndex = 0;
+			if (this.currentWordIndex >= this.words.length) {
+				this.complete();
+				return;
+			}
+			this.scheduleStateChange();
+			return;
+		}
+
 		// Mark remaining chars as missed and count them as incorrect
 		const missedCount = word.word.length - this.currentCharIndex;
 		for (let i = this.currentCharIndex; i < word.word.length; i++) {
 			word.chars[i].state = "missed";
 		}
 		this.incorrectChars += missedCount;
+		if (missedCount > 0) {
+			word.hadError = true;
+		}
 
 		word.completed = true;
 		this.totalCharsTyped++; // count space

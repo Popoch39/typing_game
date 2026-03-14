@@ -217,6 +217,89 @@ describe("TypingEngine", () => {
 			engine.handleSpace();
 			expect(engine.getState().isRunning).toBe(true);
 		});
+
+		it("skips word with 0 points when no chars typed", () => {
+			const { engine } = createEngine(["hello", "world"]);
+			engine.handleSpace(); // skip "hello"
+
+			const state = engine.getState();
+			expect(state.score).toBe(0);
+			expect(state.lastWordScore).toBe(0);
+			expect(state.currentWordIndex).toBe(1);
+			expect(state.words[0].completed).toBe(true);
+			expect(state.words[0].hadError).toBe(true);
+		});
+
+		it("marks all chars as missed when skipping", () => {
+			const { engine } = createEngine(["hello", "world"]);
+			engine.handleSpace();
+
+			const state = engine.getState();
+			for (const c of state.words[0].chars) {
+				expect(c.state).toBe("missed");
+			}
+		});
+
+		it("halves combo when skipping word", () => {
+			const { engine } = createEngine(["aa", "bb", "cc", "dd", "ee", "ff"]);
+			// Build combo with perfect words
+			for (const c of "aa") engine.handleChar(c);
+			engine.handleSpace(); // combo 1.25
+			for (const c of "bb") engine.handleChar(c);
+			engine.handleSpace(); // combo 1.5
+			for (const c of "cc") engine.handleChar(c);
+			engine.handleSpace(); // combo 1.75
+			for (const c of "dd") engine.handleChar(c);
+			engine.handleSpace(); // combo 2.0
+
+			const comboBefore = engine.getState().combo;
+			expect(comboBefore).toBe(2.0);
+
+			engine.handleSpace(); // skip "ee" → combo halved to 1.0
+			expect(engine.getState().combo).toBe(1.0);
+		});
+
+		it("spam space keeps score at 0 and combo at 1.0", () => {
+			const { engine } = createEngine(["aa", "bb", "cc", "dd"]);
+			engine.handleSpace();
+			engine.handleSpace();
+			engine.handleSpace();
+
+			const state = engine.getState();
+			expect(state.score).toBe(0);
+			expect(state.combo).toBe(1.0);
+			expect(state.currentWordIndex).toBe(3);
+		});
+
+		it("completes game when skipping last word", () => {
+			const { engine, callbacks } = createEngine(["only"]);
+			engine.handleSpace();
+
+			expect(engine.getState().isComplete).toBe(true);
+			expect(callbacks.onComplete).toHaveBeenCalled();
+		});
+
+		it("gives partial points with hadError for incomplete word", () => {
+			const { engine } = createEngine(["hello", "world"]);
+			engine.handleChar("h"); // 1 correct out of 5
+			engine.handleSpace();
+
+			const state = engine.getState();
+			expect(state.score).toBeGreaterThan(0); // partial points
+			expect(state.words[0].hadError).toBe(true); // missed chars
+			expect(state.lastWordIsPerfect).toBe(false);
+		});
+
+		it("gives full points and increases combo for perfect word", () => {
+			const { engine } = createEngine(["hi", "ok"]);
+			for (const c of "hi") engine.handleChar(c);
+			engine.handleSpace();
+
+			const state = engine.getState();
+			expect(state.score).toBeGreaterThan(0);
+			expect(state.combo).toBe(1.25);
+			expect(state.lastWordIsPerfect).toBe(true);
+		});
 	});
 
 	describe("handleBackspace", () => {

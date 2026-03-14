@@ -270,7 +270,7 @@
 }
 [data-state="correct"] {
   color: var(--foreground);
-  animation: flash-correct 150ms ease-out;
+  animation: flash-correct 250ms ease-out;
 }
 [data-state="incorrect"],
 [data-state="extra"] {
@@ -283,8 +283,16 @@
 }
 
 @keyframes flash-correct {
-  0% { color: hsl(142 70% 45%); }
-  100% { color: var(--foreground); }
+  0% {
+    color: hsl(142 90% 55%);
+    text-shadow: 0 0 8px hsl(142 90% 55% / 0.6);
+    transform: scale(1.15);
+  }
+  100% {
+    color: var(--foreground);
+    text-shadow: none;
+    transform: scale(1);
+  }
 }
 
 @keyframes flash-incorrect {

@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useSession, useSignOut } from "@/hooks/use-auth";
 import { useTypingStore } from "@/stores/use-typing-store";
 import { TypingArea } from "@/components/typing/typing-area";
+import { ComboDisplay } from "@/components/typing/combo-display";
 import { TypingStats } from "@/components/typing/typing-stats";
 import { TypingSettings } from "@/components/typing/typing-settings";
 import { TypingResult } from "@/components/typing/typing-result";
@@ -68,7 +69,10 @@ export default function Home() {
 							<TypingStats />
 							<TypingSettings />
 						</div>
-						<TypingArea />
+						<div className="relative">
+							<ComboDisplay />
+							<TypingArea />
+						</div>
 						{!isRunning && (
 							<p className="text-center text-sm text-muted-foreground">
 								Start typing to begin...
