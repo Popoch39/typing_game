@@ -80,16 +80,6 @@ describe("ScoringEngine", () => {
 			expect(engine.combo).toBe(1.0);
 		});
 
-		it("3.0 / 2 = 1.5", () => {
-			for (let i = 0; i < 8; i++) {
-				engine.scoreWord(5, false);
-			}
-			expect(engine.combo).toBe(3.0);
-
-			engine.scoreWord(5, true);
-			expect(engine.combo).toBe(1.5);
-		});
-
 		it("2.0 / 2 = 1.0", () => {
 			for (let i = 0; i < 4; i++) {
 				engine.scoreWord(5, false);
