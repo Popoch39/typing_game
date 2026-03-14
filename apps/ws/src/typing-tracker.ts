@@ -73,8 +73,10 @@ export class ServerTypingTracker {
 
 		this.totalCharsTyped++; // count space
 
-		const data = this.scoringEngine.scoreWord(word.length, this.hadErrorPerWord[this.currentWordIndex]!);
-    
+		const data = this.scoringEngine.scoreWord(
+			word.length,
+			this.hadErrorPerWord[this.currentWordIndex]!,
+		);
 
 		this.currentWordIndex++;
 		this.currentCharIndex = 0;
@@ -94,8 +96,9 @@ export class ServerTypingTracker {
 
 		if (this.currentCharIndex > 0) {
 			this.currentCharIndex--;
-			this.typedPerWord[this.currentWordIndex] =
-				this.typedPerWord[this.currentWordIndex]!.slice(0, -1);
+			this.typedPerWord[this.currentWordIndex] = this.typedPerWord[
+				this.currentWordIndex
+			]!.slice(0, -1);
 			this.hadErrorPerWord[this.currentWordIndex] = true;
 		} else if (this.currentWordIndex > 0) {
 			// Go back to previous word only if it has errors
@@ -143,8 +146,7 @@ export class ServerTypingTracker {
 			accuracy:
 				this.correctChars + this.incorrectChars > 0
 					? Math.round(
-							(this.correctChars /
-								(this.correctChars + this.incorrectChars)) *
+							(this.correctChars / (this.correctChars + this.incorrectChars)) *
 								100,
 						)
 					: 100,
@@ -157,8 +159,16 @@ export class ServerTypingTracker {
 		};
 	}
 
-	computeFinalScore(wpm: number, remainingSeconds: number): number {
-		return this.scoringEngine.computeFinalScore(wpm, remainingSeconds);
+	computeFinalScore(
+		wpm: number,
+		wordsCompleted: number,
+		remainingSeconds: number,
+	): number {
+		return this.scoringEngine.computeFinalScore(
+			wpm,
+			wordsCompleted,
+			remainingSeconds,
+		);
 	}
 
 	private wordHasErrors(word: string, typed: string): boolean {

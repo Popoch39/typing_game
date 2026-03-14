@@ -331,10 +331,10 @@ describe("ServerTypingTracker", () => {
 			const stats = t.getStats(START + 60_000);
 			// Perfect: base=25 * 1.5 * 1.0 = 37 total
 			expect(stats.score).toBe(37);
-			// Final with wpm=50: 37 * 1.0 = 37
-			expect(t.computeFinalScore(50, 0)).toBe(37);
-			// Final with wpm=100: floor(37 * 2.0) = 74
-			expect(t.computeFinalScore(100, 0)).toBe(74);
+			// Final with wpm=50, 1 word: 37 + floor(50*1*2) = 37 + 100 = 137
+			expect(t.computeFinalScore(50, 1, 0)).toBe(137);
+			// Final with wpm=100, 1 word: 37 + floor(100*1*2) = 37 + 200 = 237
+			expect(t.computeFinalScore(100, 1, 0)).toBe(237);
 		});
 	});
 

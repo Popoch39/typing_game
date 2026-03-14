@@ -267,7 +267,7 @@ export class GameRoom {
 			// Compute final score with time bonus
 			const elapsed = (t - this.gameStartTime) / 1000;
 			const remainingSeconds = Math.max(0, this.duration - elapsed);
-			ps.score = ps.tracker.computeFinalScore(stats.wpm, remainingSeconds);
+			ps.score = ps.tracker.computeFinalScore(stats.wpm, stats.wordIndex, remainingSeconds);
 
 			log.room(
 				"complete",
@@ -366,7 +366,7 @@ export class GameRoom {
 				ps.accuracy = stats.accuracy;
 				ps.rawWpm = stats.rawWpm;
 				// No time bonus for non-completers (remainingSeconds = 0)
-				ps.score = ps.tracker.computeFinalScore(stats.wpm, 0);
+				ps.score = ps.tracker.computeFinalScore(stats.wpm, stats.wordIndex, 0);
 			}
 		}
 
