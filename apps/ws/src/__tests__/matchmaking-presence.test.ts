@@ -1,4 +1,4 @@
-import { describe, it, expect, mock, beforeEach, spyOn } from "bun:test";
+import { beforeEach, describe, expect, it, mock, spyOn } from "bun:test";
 import { Matchmaking } from "../matchmaking";
 import { PresenceTracker } from "../presence";
 import type { Player } from "../types";

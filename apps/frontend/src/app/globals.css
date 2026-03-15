@@ -397,6 +397,11 @@
 	color: var(--muted-foreground);
 }
 
+[data-state="opponent-typed"] {
+	color: var(--muted-foreground);
+	opacity: 0.6;
+}
+
 [data-state="correct"] {
 	color: var(--foreground);
 	animation: flash-correct 250ms ease-out;

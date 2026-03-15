@@ -1,5 +1,5 @@
-import { and, eq, gt } from "drizzle-orm";
 import { sessions, users } from "@repo/database/schema";
+import { and, eq, gt } from "drizzle-orm";
 import { db } from "./db";
 
 export async function validateSession(

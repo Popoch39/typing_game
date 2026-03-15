@@ -46,7 +46,7 @@ export default function MultiplayerPage() {
 			{mp.status === "playing" && (
 				<MultiplayerPlayingView
 					timeRemaining={typingStore.timeRemaining}
-					gameDuration={mp.gameDuration}
+					gameDuration={mp.gameDuration ?? 0}
 					isRunning={typingStore.isRunning}
 					wpm={typingStore.wpm}
 					accuracy={typingStore.accuracy}

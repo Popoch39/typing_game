@@ -1,9 +1,9 @@
 "use client";
 
-import { RecentMatches } from "@/components/dashboard/recent-matches/recent-matches";
 import { OnlinePlayers } from "@/components/dashboard/online-players";
-import { PlaySection } from "@/components/play-section/play-section";
 import { QuickStats } from "@/components/dashboard/quick-stats";
+import { RecentMatches } from "@/components/dashboard/recent-matches/recent-matches";
+import { PlaySection } from "@/components/play-section/play-section";
 import { useSession } from "@/hooks/use-auth";
 import { useMultiplayer } from "@/hooks/use-multiplayer";
 

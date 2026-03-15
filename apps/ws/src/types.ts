@@ -1,8 +1,8 @@
 export type {
 	ClientMessage,
-	ServerMessage,
 	PlayerResult,
 	RatingChange,
+	ServerMessage,
 } from "@repo/shared/ws-protocol";
 
 export interface Player {

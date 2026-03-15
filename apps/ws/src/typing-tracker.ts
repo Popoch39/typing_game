@@ -13,6 +13,7 @@ export interface TrackerStats {
 	score: number;
 	combo: number;
 	lastWordScore: number;
+	errors: number;
 }
 
 export class ServerTypingTracker {
@@ -67,6 +68,21 @@ export class ServerTypingTracker {
 		const word = this.words[this.currentWordIndex];
 		if (word === undefined) return;
 
+		// No chars typed → skip word, 0 points, combo halved
+		if (this.currentCharIndex === 0) {
+			this.incorrectChars += word.length;
+			this.hadErrorPerWord[this.currentWordIndex] = true;
+			this.totalCharsTyped++; // count space
+			this.scoringEngine.skipWord();
+			this.currentWordIndex++;
+			this.currentCharIndex = 0;
+			if (this.currentWordIndex >= this.words.length) {
+				this.completed = true;
+				this.completedAt = Date.now();
+			}
+			return;
+		}
+
 		// Mark remaining chars as missed (counted as incorrect)
 		const missedCount = Math.max(0, word.length - this.currentCharIndex);
 		this.incorrectChars += missedCount;
@@ -76,7 +92,7 @@ export class ServerTypingTracker {
 
 		this.totalCharsTyped++; // count space
 
-		const data = this.scoringEngine.scoreWord(
+		this.scoringEngine.scoreWord(
 			word.length,
 			this.hadErrorPerWord[this.currentWordIndex]!,
 		);
@@ -159,6 +175,7 @@ export class ServerTypingTracker {
 			score: this.scoringEngine.totalScore,
 			combo: this.scoringEngine.combo,
 			lastWordScore: this.scoringEngine.lastWordScore,
+			errors: this.incorrectChars,
 		};
 	}
 

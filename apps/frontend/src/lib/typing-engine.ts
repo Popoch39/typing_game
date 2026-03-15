@@ -97,6 +97,10 @@ export class TypingEngine {
 		};
 	}
 
+	start() {
+		this.startTimer();
+	}
+
 	private startTimer() {
 		if (this.isRunning) return;
 		this.isRunning = true;

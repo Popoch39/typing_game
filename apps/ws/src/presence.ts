@@ -1,6 +1,6 @@
 import type Redis from "ioredis";
-import type { Player } from "./types";
 import { log } from "./logger";
+import type { Player } from "./types";
 
 export type PresenceStatus = "online" | "queuing" | "in_game";
 
@@ -22,7 +22,9 @@ export class PresenceTracker {
 			this.redis.hset(PRESENCE_STATUS_KEY, userId, "online"),
 			this.redis.hset(PRESENCE_NAMES_KEY, userId, name),
 		]);
-		log.info(`[presence] connect ${name} (${userId.slice(0, 8)}) — sockets: ${this.sockets.size}`);
+		log.info(
+			`[presence] connect ${name} (${userId.slice(0, 8)}) — sockets: ${this.sockets.size}`,
+		);
 		this.scheduleBroadcast();
 	}
 
@@ -33,7 +35,9 @@ export class PresenceTracker {
 			this.redis.hdel(PRESENCE_STATUS_KEY, userId),
 			this.redis.hdel(PRESENCE_NAMES_KEY, userId),
 		]);
-		log.info(`[presence] disconnect ${userId.slice(0, 8)} — sockets: ${this.sockets.size}`);
+		log.info(
+			`[presence] disconnect ${userId.slice(0, 8)} — sockets: ${this.sockets.size}`,
+		);
 		this.scheduleBroadcast();
 	}
 
@@ -44,7 +48,11 @@ export class PresenceTracker {
 		this.scheduleBroadcast();
 	}
 
-	async getPresenceCounts(): Promise<{ online: number; queuing: number; inGame: number }> {
+	async getPresenceCounts(): Promise<{
+		online: number;
+		queuing: number;
+		inGame: number;
+	}> {
 		const values = await this.redis.hvals(PRESENCE_STATUS_KEY);
 		let online = 0;
 		let queuing = 0;

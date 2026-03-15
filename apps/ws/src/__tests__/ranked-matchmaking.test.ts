@@ -1,6 +1,6 @@
-import { describe, it, expect, mock, beforeEach, spyOn } from "bun:test";
-import { RankedMatchmaking } from "../ranked-matchmaking";
+import { beforeEach, describe, expect, it, mock, spyOn } from "bun:test";
 import type { PresenceTracker } from "../presence";
+import { RankedMatchmaking } from "../ranked-matchmaking";
 import type { Player } from "../types";
 
 // Suppress logger output
@@ -230,8 +230,9 @@ describe("RankedMatchmaking", () => {
 
 			// Manipulate joinedAt to simulate 5s wait
 			// Access private playerData via bracket notation
-			const playerData = (mm as unknown as { playerData: Map<string, { joinedAt: number }> })
-				.playerData;
+			const playerData = (
+				mm as unknown as { playerData: Map<string, { joinedAt: number }> }
+			).playerData;
 			const fiveSecondsAgo = Date.now() - 5_000;
 			for (const entry of playerData.values()) {
 				entry.joinedAt = fiveSecondsAgo;
@@ -250,8 +251,9 @@ describe("RankedMatchmaking", () => {
 			await mm.joinQueue(p2, 30, 1600);
 
 			// Simulate 40s wait — range = 100 + 50*8 = 500, still not enough for 600 diff
-			const playerData = (mm as unknown as { playerData: Map<string, { joinedAt: number }> })
-				.playerData;
+			const playerData = (
+				mm as unknown as { playerData: Map<string, { joinedAt: number }> }
+			).playerData;
 			const fortySecsAgo = Date.now() - 40_000;
 			for (const entry of playerData.values()) {
 				entry.joinedAt = fortySecsAgo;
@@ -269,8 +271,9 @@ describe("RankedMatchmaking", () => {
 			await mm.joinQueue(p2, 30, 1600);
 
 			// Simulate 60s wait — range becomes infinite
-			const playerData = (mm as unknown as { playerData: Map<string, { joinedAt: number }> })
-				.playerData;
+			const playerData = (
+				mm as unknown as { playerData: Map<string, { joinedAt: number }> }
+			).playerData;
 			const longAgo = Date.now() - 60_000;
 			for (const entry of playerData.values()) {
 				entry.joinedAt = longAgo;
@@ -290,8 +293,9 @@ describe("RankedMatchmaking", () => {
 			await mm.joinQueue(p3, 30, 1020);
 
 			// Make p1 the oldest, p3 next oldest
-			const playerData = (mm as unknown as { playerData: Map<string, { joinedAt: number }> })
-				.playerData;
+			const playerData = (
+				mm as unknown as { playerData: Map<string, { joinedAt: number }> }
+			).playerData;
 			playerData.get("u1")!.joinedAt = Date.now() - 3000;
 			playerData.get("u3")!.joinedAt = Date.now() - 2000;
 			playerData.get("u2")!.joinedAt = Date.now() - 1000;
@@ -360,8 +364,11 @@ describe("RankedMatchmaking", () => {
 	describe("startMatcherLoop / stopMatcherLoop", () => {
 		it("startMatcherLoop creates interval", () => {
 			mm.startMatcherLoop();
-			const interval = (mm as unknown as { matcherInterval: ReturnType<typeof setInterval> | null })
-				.matcherInterval;
+			const interval = (
+				mm as unknown as {
+					matcherInterval: ReturnType<typeof setInterval> | null;
+				}
+			).matcherInterval;
 			expect(interval).not.toBeNull();
 			mm.stopMatcherLoop();
 		});
@@ -369,18 +376,27 @@ describe("RankedMatchmaking", () => {
 		it("stopMatcherLoop clears interval", () => {
 			mm.startMatcherLoop();
 			mm.stopMatcherLoop();
-			const interval = (mm as unknown as { matcherInterval: ReturnType<typeof setInterval> | null })
-				.matcherInterval;
+			const interval = (
+				mm as unknown as {
+					matcherInterval: ReturnType<typeof setInterval> | null;
+				}
+			).matcherInterval;
 			expect(interval).toBeNull();
 		});
 
 		it("multiple startMatcherLoop calls don't create multiple intervals", () => {
 			mm.startMatcherLoop();
-			const first = (mm as unknown as { matcherInterval: ReturnType<typeof setInterval> | null })
-				.matcherInterval;
+			const first = (
+				mm as unknown as {
+					matcherInterval: ReturnType<typeof setInterval> | null;
+				}
+			).matcherInterval;
 			mm.startMatcherLoop();
-			const second = (mm as unknown as { matcherInterval: ReturnType<typeof setInterval> | null })
-				.matcherInterval;
+			const second = (
+				mm as unknown as {
+					matcherInterval: ReturnType<typeof setInterval> | null;
+				}
+			).matcherInterval;
 			expect(first).toBe(second);
 			mm.stopMatcherLoop();
 		});

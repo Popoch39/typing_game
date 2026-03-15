@@ -1,10 +1,15 @@
 import { Elysia, t } from "elysia";
 import { validateSession } from "./auth";
+import { log } from "./logger";
 import { Matchmaking } from "./matchmaking";
 import { PresenceTracker } from "./presence";
-import { initRedis, getRedis, getRedisSub } from "./redis";
-import type { ClientMessage, Player, PlayerResult, RatingChange } from "./types";
-import { log } from "./logger";
+import { getRedis, getRedisSub, initRedis } from "./redis";
+import type {
+	ClientMessage,
+	Player,
+	PlayerResult,
+	RatingChange,
+} from "./types";
 
 const PORT = Number(process.env.PORT) || 3002;
 const API_URL = process.env.API_INTERNAL_URL || "http://localhost:3001";
@@ -44,15 +49,11 @@ async function handleGameFinish(
 			}),
 		});
 		if (!res.ok) {
-			console.error(
-				"[game-finish] API error:",
-				res.status,
-				await res.text(),
-			);
+			console.error("[game-finish] API error:", res.status, await res.text());
 			return null;
 		}
 		if (ranked) {
-			const data = await res.json() as {
+			const data = (await res.json()) as {
 				ratings: {
 					player1: { before: number; after: number } | null;
 					player2: { before: number; after: number } | null;
@@ -164,9 +165,7 @@ const app = new Elysia()
 				case "join_ranked_queue": {
 					let rating = 1500;
 					try {
-						const res = await fetch(
-							`${API_URL}/api/rating/${player.userId}`,
-						);
+						const res = await fetch(`${API_URL}/api/rating/${player.userId}`);
 						if (res.ok) {
 							const data = (await res.json()) as { rating: number };
 							rating = data.rating;

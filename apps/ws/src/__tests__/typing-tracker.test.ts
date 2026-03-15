@@ -1,4 +1,4 @@
-import { describe, it, expect } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import { ServerTypingTracker } from "../typing-tracker";
 
 const START = 1000;
@@ -86,6 +86,26 @@ describe("ServerTypingTracker", () => {
 			typeWord(t, "cd");
 			t.handleSpace();
 			expect(t.getStats(START).completed).toBe(true);
+		});
+
+		it("skipping a word (space with 0 chars typed) gives 0 points", () => {
+			const t = createTracker(["abc", "de"]);
+			t.handleSpace(); // skip "abc" entirely
+			const stats = t.getStats(START + 60_000);
+			expect(stats.score).toBe(0);
+			expect(stats.wordIndex).toBe(1);
+			// All chars of skipped word counted as incorrect
+			expect(stats.accuracy).toBe(0);
+		});
+
+		it("spamming space through all words gives 0 total score", () => {
+			const t = createTracker(["abc", "de", "fgh"]);
+			t.handleSpace(); // skip "abc"
+			t.handleSpace(); // skip "de"
+			t.handleSpace(); // skip "fgh"
+			const stats = t.getStats(START + 60_000);
+			expect(stats.score).toBe(0);
+			expect(stats.completed).toBe(true);
 		});
 
 		it("is no-op when completed", () => {
@@ -230,6 +250,23 @@ describe("ServerTypingTracker", () => {
 			const stats = t.getStats(START); // 0 elapsed
 			expect(stats.wpm).toBe(0);
 			expect(stats.rawWpm).toBe(0);
+		});
+
+		it("returns errors = cumulative incorrectChars", () => {
+			const t = createTracker(["abc", "de"]);
+			t.handleChar("x"); // 1 incorrect
+			t.handleChar("b");
+			t.handleChar("c");
+			expect(t.getStats(START).errors).toBe(1);
+			t.handleSpace();
+			t.handleChar("x"); // 2 incorrect total
+			expect(t.getStats(START).errors).toBe(2);
+		});
+
+		it("returns errors = 0 when all correct", () => {
+			const t = createTracker(["abc"]);
+			typeWord(t, "abc");
+			expect(t.getStats(START).errors).toBe(0);
 		});
 	});
 

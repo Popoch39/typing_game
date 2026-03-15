@@ -7,6 +7,16 @@ import type {
 
 // --- Types ---
 
+export interface ScoreHistoryPoint {
+	elapsed: number;
+	selfScore: number;
+	oppScore: number;
+	selfWpm: number;
+	oppWpm: number;
+	selfErrors: number;
+	oppErrors: number;
+}
+
 export type MultiplayerStatus =
 	| "idle"
 	| "connecting"
@@ -59,6 +69,7 @@ export interface MultiplayerState {
 	presence: { online: number; queuing: number; inGame: number };
 	isRanked: boolean;
 	ratingChange: RatingChange[] | null;
+	scoreHistory: ScoreHistoryPoint[];
 }
 
 export interface MultiplayerClientCallbacks {
@@ -85,6 +96,7 @@ const initialState: MultiplayerState = {
 	presence: { online: 0, queuing: 0, inGame: 0 },
 	isRanked: false,
 	ratingChange: null,
+	scoreHistory: [],
 };
 
 // --- Logger ---
@@ -109,6 +121,13 @@ export class MultiplayerClient {
 	private state: MultiplayerState = { ...initialState };
 	private callbacks: MultiplayerClientCallbacks;
 	private wsFactory: WebSocketFactory;
+	private lastSelfScore = 0;
+	private lastOppScore = 0;
+	private lastSelfWpm = 0;
+	private lastOppWpm = 0;
+	private lastSelfErrors = 0;
+	private lastOppErrors = 0;
+	private lastHistoryTime = -1;
 
 	constructor(
 		callbacks: MultiplayerClientCallbacks,
@@ -153,7 +172,11 @@ export class MultiplayerClient {
 				log("recv", "invalid JSON:", event.data);
 				return;
 			}
-			if (msg.type !== "opponent_progress" && msg.type !== "self_stats" && msg.type !== "presence_update") {
+			if (
+				msg.type !== "opponent_progress" &&
+				msg.type !== "self_stats" &&
+				msg.type !== "presence_update"
+			) {
 				log("recv", `← ${msg.type}`, msg);
 			}
 			this.handleMessage(msg);
@@ -287,6 +310,13 @@ export class MultiplayerClient {
 				this.setState({ countdownValue: msg.value, status: "countdown" });
 				break;
 			case "game_start":
+				this.lastSelfScore = 0;
+				this.lastOppScore = 0;
+				this.lastSelfWpm = 0;
+				this.lastOppWpm = 0;
+				this.lastSelfErrors = 0;
+				this.lastOppErrors = 0;
+				this.lastHistoryTime = -1;
 				this.setState({
 					gameWords: msg.words,
 					gameDuration: msg.duration,
@@ -294,9 +324,20 @@ export class MultiplayerClient {
 					status: "playing",
 					selfStats: null,
 					selfComplete: false,
+					scoreHistory: [],
 				});
 				break;
-			case "self_stats":
+			case "self_stats": {
+				const deltaErrors = msg.errors - this.lastSelfErrors;
+				this.lastSelfErrors = msg.errors;
+				this.pushScorePoint(
+					msg.score,
+					this.lastOppScore,
+					msg.wpm,
+					this.lastOppWpm,
+					deltaErrors,
+					0,
+				);
 				this.setState({
 					selfStats: {
 						wpm: msg.wpm,
@@ -311,6 +352,7 @@ export class MultiplayerClient {
 					},
 				});
 				break;
+			}
 			case "self_complete":
 				this.setState({
 					selfComplete: true,
@@ -327,7 +369,17 @@ export class MultiplayerClient {
 					},
 				});
 				break;
-			case "opponent_progress":
+			case "opponent_progress": {
+				const oppDeltaErrors = msg.errors - this.lastOppErrors;
+				this.lastOppErrors = msg.errors;
+				this.pushScorePoint(
+					this.lastSelfScore,
+					msg.score,
+					this.lastSelfWpm,
+					msg.wpm,
+					0,
+					oppDeltaErrors,
+				);
 				this.setState({
 					opponent: this.state.opponent
 						? { ...this.state.opponent, ...msg }
@@ -344,6 +396,7 @@ export class MultiplayerClient {
 							},
 				});
 				break;
+			}
 			case "opponent_complete":
 				this.setState({
 					opponent: this.state.opponent
@@ -391,12 +444,57 @@ export class MultiplayerClient {
 				this.send({ type: "pong", t: (msg as any).t } as ClientMessage);
 				break;
 			case "presence_update":
-				this.setState({ presence: { online: msg.online, queuing: msg.queuing, inGame: msg.inGame } });
+				this.setState({
+					presence: {
+						online: msg.online,
+						queuing: msg.queuing,
+						inGame: msg.inGame,
+					},
+				});
 				break;
 			case "error":
 				this.setState({ error: msg.message });
 				break;
 		}
+	}
+
+	private pushScorePoint(
+		selfScore: number,
+		oppScore: number,
+		selfWpm: number,
+		oppWpm: number,
+		selfErrors: number,
+		oppErrors: number,
+	): void {
+		if (!this.state.gameStartTime) return;
+		const elapsed = Math.round((Date.now() - this.state.gameStartTime) / 1000);
+		this.lastSelfScore = selfScore;
+		this.lastOppScore = oppScore;
+		this.lastSelfWpm = selfWpm;
+		this.lastOppWpm = oppWpm;
+		if (elapsed === this.lastHistoryTime) {
+			// Same second — accumulate errors into existing point
+			const history = this.state.scoreHistory;
+			const last = history[history.length - 1];
+			if (last) {
+				const updated = {
+					...last,
+					selfScore,
+					oppScore,
+					selfWpm,
+					oppWpm,
+					selfErrors: last.selfErrors + selfErrors,
+					oppErrors: last.oppErrors + oppErrors,
+				};
+				this.state.scoreHistory = [...history.slice(0, -1), updated];
+			}
+			return;
+		}
+		this.lastHistoryTime = elapsed;
+		this.state.scoreHistory = [
+			...this.state.scoreHistory,
+			{ elapsed, selfScore, oppScore, selfWpm, oppWpm, selfErrors, oppErrors },
+		];
 	}
 
 	private setState(partial: Partial<MultiplayerState>): void {

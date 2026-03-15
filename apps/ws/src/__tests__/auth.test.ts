@@ -1,4 +1,4 @@
-import { describe, it, expect, mock, beforeEach } from "bun:test";
+import { beforeEach, describe, expect, it, mock } from "bun:test";
 
 // Mock the db module before importing auth
 const mockSelect = mock(() => {});
@@ -47,7 +47,11 @@ mock.module("drizzle-orm", () => ({
 
 // Mock schema
 mock.module("@repo/database/schema", () => ({
-	sessions: { userId: "sessions.userId", token: "sessions.token", expiresAt: "sessions.expiresAt" },
+	sessions: {
+		userId: "sessions.userId",
+		token: "sessions.token",
+		expiresAt: "sessions.expiresAt",
+	},
 	users: { id: "users.id", name: "users.name" },
 }));
 

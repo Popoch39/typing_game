@@ -36,6 +36,7 @@ export type ServerMessage =
 			score: number;
 			combo: number;
 			lastWordScore: number;
+			errors: number;
 	  }
 	| {
 			type: "self_complete";
@@ -52,6 +53,7 @@ export type ServerMessage =
 			accuracy: number;
 			score: number;
 			combo: number;
+			errors: number;
 	  }
 	| {
 			type: "opponent_complete";

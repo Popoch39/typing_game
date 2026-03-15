@@ -17,4 +17,5 @@ export const useMultiplayerStore = create<MultiplayerState>(() => ({
 	presence: { online: 0, queuing: 0, inGame: 0 },
 	isRanked: false,
 	ratingChange: null,
+	scoreHistory: [],
 }));

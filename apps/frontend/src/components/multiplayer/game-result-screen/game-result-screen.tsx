@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useSession } from "@/hooks/use-auth";
 import { useMultiplayerStore } from "@/stores/use-multiplayer-store";
 import { PlayerResultCard } from "./player-result-card";
+import { ScoreHistoryChart } from "./score-history-chart";
 
 export function GameResultScreen({
 	onPlayAgain,
@@ -17,6 +18,8 @@ export function GameResultScreen({
 	const gameResult = useMultiplayerStore((s) => s.gameResult);
 	const isRanked = useMultiplayerStore((s) => s.isRanked);
 	const ratingChange = useMultiplayerStore((s) => s.ratingChange);
+	const scoreHistory = useMultiplayerStore((s) => s.scoreHistory);
+	const gameDuration = useMultiplayerStore((s) => s.gameDuration);
 	const { data: session } = useSession();
 
 	if (!gameResult) return null;
@@ -39,7 +42,7 @@ export function GameResultScreen({
 	);
 
 	return (
-		<Card className="mx-auto w-full max-w-md">
+		<Card className="mx-auto w-full max-w-2xl">
 			<CardHeader>
 				<CardTitle className="text-center">
 					{isTie ? "Tie!" : isWinner ? "You won!" : "You lost!"}
@@ -75,6 +78,11 @@ export function GameResultScreen({
 						isRanked={isRanked}
 					/>
 				</div>
+
+				<ScoreHistoryChart
+					data={scoreHistory}
+					duration={gameDuration ?? undefined}
+				/>
 
 				<div className="flex gap-3">
 					<Button className="flex-1" variant="outline" onClick={onPlayAgain}>

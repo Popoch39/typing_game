@@ -1,4 +1,4 @@
-import { describe, it, expect, mock, beforeEach, spyOn } from "bun:test";
+import { beforeEach, describe, expect, it, mock, spyOn } from "bun:test";
 import { GameRoom } from "../game-room";
 import type { Player } from "../types";
 
@@ -437,7 +437,11 @@ describe("GameRoom", () => {
 
 		it("falls back to server time when timestamp is too far in the future", async () => {
 			const { p1 } = await setupPlayingRoom();
-			room.handleKeystroke("p1", { key: "char", char: "a" }, Date.now() + 999999);
+			room.handleKeystroke(
+				"p1",
+				{ key: "char", char: "a" },
+				Date.now() + 999999,
+			);
 			const stats = sentOfType(p1, "self_stats");
 			expect(stats.length).toBeGreaterThan(0);
 		}, 10_000);

@@ -53,7 +53,12 @@ function benchGameRoom() {
 	let msgCount = 0;
 
 	const makePlayer = (id: string, name: string): Player => ({
-		ws: { send: () => { msgCount++; }, close: noop },
+		ws: {
+			send: () => {
+				msgCount++;
+			},
+			close: noop,
+		},
 		userId: id,
 		name,
 	});
@@ -82,10 +87,12 @@ function benchGameRoom() {
 		const perSec = Math.round((KEYSTROKES / elapsed) * 1000);
 
 		write(`\n📊 GameRoom keystroke throughput:`);
-		write(`   ${KEYSTROKES.toLocaleString()} keystrokes in ${elapsed.toFixed(1)}ms`);
+		write(
+			`   ${KEYSTROKES.toLocaleString()} keystrokes in ${elapsed.toFixed(1)}ms`,
+		);
 		write(`   ${perSec.toLocaleString()} keystrokes/sec`);
 		write(`   ${msgCount.toLocaleString()} WS messages generated`);
-		write(`   ${(elapsed / KEYSTROKES * 1000).toFixed(1)}µs per keystroke`);
+		write(`   ${((elapsed / KEYSTROKES) * 1000).toFixed(1)}µs per keystroke`);
 
 		// Measure space (word transitions)
 		msgCount = 0;
@@ -98,7 +105,9 @@ function benchGameRoom() {
 		const perSec2 = Math.round((spaceCount / elapsed2) * 1000);
 
 		write(`\n📊 GameRoom space throughput:`);
-		write(`   ${spaceCount.toLocaleString()} spaces in ${elapsed2.toFixed(1)}ms`);
+		write(
+			`   ${spaceCount.toLocaleString()} spaces in ${elapsed2.toFixed(1)}ms`,
+		);
 		write(`   ${perSec2.toLocaleString()} spaces/sec`);
 	}, 3200);
 }
@@ -113,12 +122,22 @@ function benchMatchmaking() {
 		const start = performance.now();
 		for (let i = 0; i < pairCount; i++) {
 			const p1: Player = {
-				ws: { send: () => { msgCount++; }, close: noop },
+				ws: {
+					send: () => {
+						msgCount++;
+					},
+					close: noop,
+				},
 				userId: `user-${i * 2}`,
 				name: `Player${i * 2}`,
 			};
 			const p2: Player = {
-				ws: { send: () => { msgCount++; }, close: noop },
+				ws: {
+					send: () => {
+						msgCount++;
+					},
+					close: noop,
+				},
 				userId: `user-${i * 2 + 1}`,
 				name: `Player${i * 2 + 1}`,
 			};
@@ -129,7 +148,9 @@ function benchMatchmaking() {
 
 		write(`\n📊 Matchmaking throughput:`);
 		write(`   ${pairCount} pairs matched in ${elapsed.toFixed(1)}ms`);
-		write(`   ${Math.round((pairCount / elapsed) * 1000).toLocaleString()} matches/sec`);
+		write(
+			`   ${Math.round((pairCount / elapsed) * 1000).toLocaleString()} matches/sec`,
+		);
 		write(`   ${msgCount.toLocaleString()} WS messages generated`);
 
 		process.exit(0);
@@ -146,8 +167,10 @@ async function benchWs() {
 	if (tokens.length < 2) {
 		write("ERROR: Need at least 2 tokens: --tokens token1,token2");
 		write("\nTo get tokens, check your session table:");
-		write('  docker compose exec postgres psql -U postgres -d typing_game \\');
-		write('    -c "SELECT token FROM session ORDER BY created_at DESC LIMIT 2"');
+		write("  docker compose exec postgres psql -U postgres -d typing_game \\");
+		write(
+			'    -c "SELECT token FROM session ORDER BY created_at DESC LIMIT 2"',
+		);
 		process.exit(1);
 	}
 
@@ -156,7 +179,13 @@ async function benchWs() {
 	write(`Pairs: ${pairs}`);
 	write(`Keystrokes/player: ${KEYSTROKES.toLocaleString()}\n`);
 
-	const results: { pair: number; elapsed: number; sent: number; received: number; latencies: number[] }[] = [];
+	const results: {
+		pair: number;
+		elapsed: number;
+		sent: number;
+		received: number;
+		latencies: number[];
+	}[] = [];
 
 	for (let p = 0; p < pairs; p++) {
 		const result = await benchWsPair(url, tokens[0]!, tokens[1]!, p);
@@ -166,21 +195,32 @@ async function benchWs() {
 	write("\n=== Summary ===");
 	const totalSent = results.reduce((s, r) => s + r.sent, 0);
 	const totalElapsed = Math.max(...results.map((r) => r.elapsed));
-	const allLatencies = results.flatMap((r) => r.latencies).sort((a, b) => a - b);
+	const allLatencies = results
+		.flatMap((r) => r.latencies)
+		.sort((a, b) => a - b);
 
 	write(`Total keystrokes sent: ${totalSent.toLocaleString()}`);
 	write(`Total time: ${totalElapsed.toFixed(0)}ms`);
-	write(`Throughput: ${Math.round((totalSent / totalElapsed) * 1000).toLocaleString()} keystrokes/sec`);
+	write(
+		`Throughput: ${Math.round((totalSent / totalElapsed) * 1000).toLocaleString()} keystrokes/sec`,
+	);
 
 	if (allLatencies.length > 0) {
 		const p50 = allLatencies[Math.floor(allLatencies.length * 0.5)]!;
 		const p95 = allLatencies[Math.floor(allLatencies.length * 0.95)]!;
 		const p99 = allLatencies[Math.floor(allLatencies.length * 0.99)]!;
-		write(`Latency p50: ${p50.toFixed(2)}ms  p95: ${p95.toFixed(2)}ms  p99: ${p99.toFixed(2)}ms`);
+		write(
+			`Latency p50: ${p50.toFixed(2)}ms  p95: ${p95.toFixed(2)}ms  p99: ${p99.toFixed(2)}ms`,
+		);
 	}
 }
 
-async function benchWsPair(url: string, token1: string, token2: string, pairIdx: number) {
+async function benchWsPair(
+	url: string,
+	token1: string,
+	token2: string,
+	pairIdx: number,
+) {
 	const latencies: number[] = [];
 	let received = 0;
 
@@ -189,7 +229,9 @@ async function benchWsPair(url: string, token1: string, token2: string, pairIdx:
 			const ws = new WebSocket(`${url}?token=${token}`);
 			ws.onopen = () => resolve(ws);
 			ws.onerror = (e) => reject(e);
-			ws.onmessage = () => { received++; };
+			ws.onmessage = () => {
+				received++;
+			};
 		});
 	}
 
@@ -212,7 +254,9 @@ async function benchWsPair(url: string, token1: string, token2: string, pairIdx:
 			}
 		};
 	});
-	write(`Pair ${pairIdx}: game started, sending ${KEYSTROKES.toLocaleString()} keystrokes...`);
+	write(
+		`Pair ${pairIdx}: game started, sending ${KEYSTROKES.toLocaleString()} keystrokes...`,
+	);
 
 	const chars = "abcdefghijklmnopqrstuvwxyz";
 	const start = performance.now();
@@ -238,7 +282,9 @@ async function benchWsPair(url: string, token1: string, token2: string, pairIdx:
 	const elapsed = performance.now() - start;
 	const perSec = Math.round((sent / elapsed) * 1000);
 
-	write(`Pair ${pairIdx}: ${sent.toLocaleString()} sent in ${elapsed.toFixed(0)}ms (${perSec.toLocaleString()}/sec), ${received} responses`);
+	write(
+		`Pair ${pairIdx}: ${sent.toLocaleString()} sent in ${elapsed.toFixed(0)}ms (${perSec.toLocaleString()}/sec), ${received} responses`,
+	);
 
 	ws1.close();
 	ws2.close();

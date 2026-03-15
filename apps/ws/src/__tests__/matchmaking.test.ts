@@ -1,4 +1,4 @@
-import { describe, it, expect, mock, beforeEach, spyOn } from "bun:test";
+import { beforeEach, describe, expect, it, mock, spyOn } from "bun:test";
 import { Matchmaking } from "../matchmaking";
 import type { Player } from "../types";
 
@@ -182,7 +182,11 @@ describe("Matchmaking", () => {
 		}, 10_000);
 
 		it("does nothing if player has no room", () => {
-			mm.handleMessage("unknown", { type: "keystroke", key: "char", char: "a" });
+			mm.handleMessage("unknown", {
+				type: "keystroke",
+				key: "char",
+				char: "a",
+			});
 		});
 
 		it("does nothing for non-keystroke message types", () => {

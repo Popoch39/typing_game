@@ -254,6 +254,7 @@ describe("MultiplayerClient", () => {
 				accuracy: 97,
 				wordIndex: 3,
 				charIndex: 2,
+				errors: 2,
 			});
 			const state = lastState(onStateChange);
 			expect(state.selfStats).toEqual({
@@ -294,6 +295,9 @@ describe("MultiplayerClient", () => {
 				charIndex: 3,
 				wpm: 45,
 				accuracy: 98,
+				score: 50,
+				combo: 1.0,
+				errors: 0,
 			});
 			const opp = lastState(onStateChange).opponent!;
 			expect(opp.name).toBe("Bob");
@@ -309,6 +313,9 @@ describe("MultiplayerClient", () => {
 				charIndex: 0,
 				wpm: 30,
 				accuracy: 100,
+				score: 0,
+				combo: 1.0,
+				errors: 0,
 			});
 			const opp = lastState(onStateChange).opponent!;
 			expect(opp.name).toBe("");
@@ -480,6 +487,161 @@ describe("MultiplayerClient", () => {
 			const { client } = createClient();
 			// No connect() call
 			client.joinQueue(30); // should not throw
+		});
+	});
+
+	describe("score history accumulation", () => {
+		function playingClient() {
+			const ctx = createClient();
+			ctx.client.connect("t");
+			ctx.getWs().simulateOpen();
+			ctx.getWs().simulateMessage({
+				type: "game_start",
+				words: ["hello", "world"],
+				duration: 30,
+				startTime: Date.now(),
+			});
+			ctx.onStateChange.mockClear();
+			return ctx;
+		}
+
+		it("records score points from self_stats", () => {
+			const { getWs, onStateChange } = playingClient();
+			getWs().simulateMessage({
+				type: "self_stats",
+				wpm: 50,
+				rawWpm: 55,
+				accuracy: 97,
+				wordIndex: 1,
+				charIndex: 0,
+				timeCorrection: 0,
+				score: 100,
+				combo: 1.0,
+				lastWordScore: 100,
+				errors: 2,
+			});
+			const state = lastState(onStateChange);
+			expect(state.scoreHistory.length).toBeGreaterThanOrEqual(1);
+			expect(state.scoreHistory[0].selfScore).toBe(100);
+			expect(state.scoreHistory[0].oppScore).toBe(0);
+			expect(state.scoreHistory[0].selfWpm).toBe(50);
+			expect(state.scoreHistory[0].oppWpm).toBe(0);
+			expect(state.scoreHistory[0].selfErrors).toBe(2);
+		});
+
+		it("records score points from opponent_progress", () => {
+			const { getWs, onStateChange } = playingClient();
+			getWs().simulateMessage({
+				type: "opponent_progress",
+				wordIndex: 1,
+				charIndex: 0,
+				wpm: 40,
+				accuracy: 95,
+				score: 80,
+				combo: 1.0,
+				errors: 3,
+			});
+			const state = lastState(onStateChange);
+			expect(state.scoreHistory.length).toBeGreaterThanOrEqual(1);
+			expect(state.scoreHistory[0].oppScore).toBe(80);
+			expect(state.scoreHistory[0].selfScore).toBe(0);
+			expect(state.scoreHistory[0].oppWpm).toBe(40);
+			expect(state.scoreHistory[0].selfWpm).toBe(0);
+			expect(state.scoreHistory[0].selfErrors).toBe(0);
+			expect(state.scoreHistory[0].oppErrors).toBe(3);
+		});
+
+		it("throttles to max 1 point per second", () => {
+			const { getWs, onStateChange } = playingClient();
+			// Send two self_stats in rapid succession (same second)
+			getWs().simulateMessage({
+				type: "self_stats",
+				wpm: 50,
+				rawWpm: 55,
+				accuracy: 97,
+				wordIndex: 1,
+				charIndex: 0,
+				timeCorrection: 0,
+				score: 100,
+				combo: 1.0,
+				lastWordScore: 100,
+				errors: 0,
+			});
+			getWs().simulateMessage({
+				type: "self_stats",
+				wpm: 55,
+				rawWpm: 60,
+				accuracy: 97,
+				wordIndex: 2,
+				charIndex: 0,
+				timeCorrection: 0,
+				score: 200,
+				combo: 1.0,
+				lastWordScore: 100,
+				errors: 1,
+			});
+			const state = lastState(onStateChange);
+			// Should have at most 1 point since both messages arrive in the same second
+			expect(state.scoreHistory.length).toBe(1);
+		});
+
+		it("uses last-known opponent score when self_stats arrives", () => {
+			// Use a startTime far enough in the past to get different elapsed seconds
+			const ctx = createClient();
+			ctx.client.connect("t");
+			ctx.getWs().simulateOpen();
+			ctx.getWs().simulateMessage({
+				type: "game_start",
+				words: ["hello", "world"],
+				duration: 30,
+				startTime: Date.now() - 2000, // 2 seconds ago
+			});
+			ctx.onStateChange.mockClear();
+
+			// opponent_progress arrives (elapsed ~2s)
+			ctx.getWs().simulateMessage({
+				type: "opponent_progress",
+				wordIndex: 1,
+				charIndex: 0,
+				wpm: 40,
+				accuracy: 95,
+				score: 80,
+				combo: 1.0,
+				errors: 0,
+			});
+			// The last-known oppScore is now 80
+			const stateAfterOpp = lastState(ctx.onStateChange);
+			expect(stateAfterOpp.scoreHistory.length).toBeGreaterThanOrEqual(1);
+			const oppPoint =
+				stateAfterOpp.scoreHistory[stateAfterOpp.scoreHistory.length - 1];
+			expect(oppPoint.oppScore).toBe(80);
+		});
+
+		it("resets history on new game_start", () => {
+			const { getWs, onStateChange } = playingClient();
+			getWs().simulateMessage({
+				type: "self_stats",
+				wpm: 50,
+				rawWpm: 55,
+				accuracy: 97,
+				wordIndex: 1,
+				charIndex: 0,
+				timeCorrection: 0,
+				score: 100,
+				combo: 1.0,
+				lastWordScore: 100,
+				errors: 0,
+			});
+			expect(lastState(onStateChange).scoreHistory.length).toBeGreaterThan(0);
+
+			// New game starts
+			getWs().simulateMessage({
+				type: "game_start",
+				words: ["foo", "bar"],
+				duration: 30,
+				startTime: Date.now() + 60000,
+			});
+			expect(lastState(onStateChange).scoreHistory).toEqual([]);
 		});
 	});
 });

@@ -1,7 +1,7 @@
 import type Redis from "ioredis";
-import type { Player } from "./types";
-import type { PresenceTracker } from "./presence";
 import { log } from "./logger";
+import type { PresenceTracker } from "./presence";
+import type { Player } from "./types";
 
 interface RankedQueueEntry {
 	player: Player;
@@ -150,9 +150,10 @@ export class RankedMatchmaking {
 
 			const waitSec = (now - entry.joinedAt) / 1000;
 			// Range expands over time: ±100 at start, +50 every 5s, no cap after 60s
-			const searchRange = waitSec >= 60
-				? Number.POSITIVE_INFINITY
-				: Math.min(500, 100 + 50 * Math.floor(waitSec / 5));
+			const searchRange =
+				waitSec >= 60
+					? Number.POSITIVE_INFINITY
+					: Math.min(500, 100 + 50 * Math.floor(waitSec / 5));
 
 			// Find closest-rated opponent within range
 			let bestMatch: (typeof entries)[number] | null = null;

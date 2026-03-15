@@ -1,4 +1,12 @@
-import { describe, it, expect, mock, beforeEach, afterEach, spyOn } from "bun:test";
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	mock,
+	spyOn,
+} from "bun:test";
 import { PresenceTracker } from "../presence";
 
 // Suppress logger output
@@ -49,8 +57,8 @@ function createWs() {
 }
 
 function sentMessages(ws: ReturnType<typeof createWs>): any[] {
-	return (ws.send as ReturnType<typeof mock>).mock.calls.map(
-		(c: unknown[]) => JSON.parse(c[0] as string),
+	return (ws.send as ReturnType<typeof mock>).mock.calls.map((c: unknown[]) =>
+		JSON.parse(c[0] as string),
 	);
 }
 
@@ -82,7 +90,11 @@ describe("PresenceTracker (Redis)", () => {
 		it("HSET presence:status + presence:names called", async () => {
 			const ws = createWs();
 			await tracker.connect("u1", "Alice", ws);
-			expect(redis.hset).toHaveBeenCalledWith("presence:status", "u1", "online");
+			expect(redis.hset).toHaveBeenCalledWith(
+				"presence:status",
+				"u1",
+				"online",
+			);
 			expect(redis.hset).toHaveBeenCalledWith("presence:names", "u1", "Alice");
 		});
 
@@ -93,7 +105,12 @@ describe("PresenceTracker (Redis)", () => {
 			const msgs = presenceMessages(ws);
 			expect(msgs.length).toBeGreaterThanOrEqual(1);
 			const last = msgs[msgs.length - 1];
-			expect(last).toEqual({ type: "presence_update", online: 1, queuing: 0, inGame: 0 });
+			expect(last).toEqual({
+				type: "presence_update",
+				online: 1,
+				queuing: 0,
+				inGame: 0,
+			});
 		});
 
 		it("2 connects → online=2", async () => {
@@ -171,7 +188,11 @@ describe("PresenceTracker (Redis)", () => {
 			const ws = createWs();
 			await tracker.connect("u1", "Alice", ws);
 			await tracker.setStatus("u1", "queuing");
-			expect(redis.hset).toHaveBeenCalledWith("presence:status", "u1", "queuing");
+			expect(redis.hset).toHaveBeenCalledWith(
+				"presence:status",
+				"u1",
+				"queuing",
+			);
 		});
 
 		it("broadcast triggered", async () => {

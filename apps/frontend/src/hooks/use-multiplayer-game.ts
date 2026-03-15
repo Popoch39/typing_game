@@ -53,6 +53,7 @@ export function useMultiplayerGame() {
 
 		engineRef.current = engine;
 		useTypingStore.setState({ engine });
+		engine.start();
 		syncFromEngine();
 
 		return () => {

@@ -1,7 +1,12 @@
-import type { Player, PlayerResult, RatingChange, ServerMessage } from "./types";
-import { generateWordList } from "./word-list";
-import { ServerTypingTracker } from "./typing-tracker";
 import { log } from "./logger";
+import type {
+	Player,
+	PlayerResult,
+	RatingChange,
+	ServerMessage,
+} from "./types";
+import { ServerTypingTracker } from "./typing-tracker";
+import { generateWordList } from "./word-list";
 
 type RoomState = "waiting" | "countdown" | "playing" | "finished";
 
@@ -201,7 +206,13 @@ export class GameRoom {
 		const winner = opponent.player.userId;
 		const results = this.buildResults(winner);
 
-		const ratingChanges = await this.onFinish?.(this.id, this.ranked, winner, results, this.duration);
+		const ratingChanges = await this.onFinish?.(
+			this.id,
+			this.ranked,
+			winner,
+			results,
+			this.duration,
+		);
 		this.broadcast({
 			type: "game_result",
 			winner,
@@ -255,7 +266,11 @@ export class GameRoom {
 		let t = clientTime;
 		const now = Date.now();
 		let corrected = false;
-		if (t < this.gameStartTime || t > now + ps.tolerance || t < ps.lastKeystrokeTime) {
+		if (
+			t < this.gameStartTime ||
+			t > now + ps.tolerance ||
+			t < ps.lastKeystrokeTime
+		) {
 			t = now;
 			corrected = true;
 		}
@@ -280,6 +295,7 @@ export class GameRoom {
 			score: stats.score,
 			combo: stats.combo,
 			lastWordScore: stats.lastWordScore,
+			errors: stats.errors,
 		});
 
 		// Send progress to opponent
@@ -293,6 +309,7 @@ export class GameRoom {
 				accuracy: stats.accuracy,
 				score: stats.score,
 				combo: stats.combo,
+				errors: stats.errors,
 			});
 		}
 
@@ -338,9 +355,7 @@ export class GameRoom {
 			}
 
 			// Check if both completed
-			const allCompleted = [...this.players.values()].every(
-				(p) => p.completed,
-			);
+			const allCompleted = [...this.players.values()].every((p) => p.completed);
 			if (allCompleted) {
 				this.finishGame();
 			}
@@ -450,7 +465,13 @@ export class GameRoom {
 			: "tie";
 		log.room("finish", this.id, `winner=${winnerName}`);
 
-		const ratingChanges = await this.onFinish?.(this.id, this.ranked, winner, results, this.duration);
+		const ratingChanges = await this.onFinish?.(
+			this.id,
+			this.ranked,
+			winner,
+			results,
+			this.duration,
+		);
 		this.broadcast({
 			type: "game_result",
 			winner,

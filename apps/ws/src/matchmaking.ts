@@ -1,9 +1,9 @@
-import type { Player, PlayerResult, RatingChange } from "./types";
 import { GameRoom } from "./game-room";
+import { log } from "./logger";
 import type { PresenceTracker } from "./presence";
 import { RankedMatchmaking } from "./ranked-matchmaking";
 import { getRedis } from "./redis";
-import { log } from "./logger";
+import type { Player, PlayerResult, RatingChange } from "./types";
 
 function generateId(): string {
 	return crypto.randomUUID();
@@ -66,8 +66,7 @@ export class Matchmaking {
 		this.rankedMatchmaking = new RankedMatchmaking({
 			redis,
 			presence: this.presence,
-			onMatch: (p1, p2, duration) =>
-				this.createMatch(p1, p2, duration, true),
+			onMatch: (p1, p2, duration) => this.createMatch(p1, p2, duration, true),
 		});
 		this.rankedMatchmaking.startMatcherLoop();
 	}
