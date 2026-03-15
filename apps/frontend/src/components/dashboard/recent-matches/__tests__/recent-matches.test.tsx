@@ -1,4 +1,4 @@
-import { screen, within } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { MatchResult } from "@/hooks/use-rating";
 import { renderWithProviders } from "@/test/test-utils";
@@ -11,6 +11,7 @@ const MY_ID = "user-me-123";
 vi.mock("next/image", () => ({
 	default: (props: React.ImgHTMLAttributes<HTMLImageElement>) => (
 		// biome-ignore lint/a11y/useAltText: alt is passed via spread props
+		// biome-ignore lint/performance/noImgElement: mock for testing
 		<img {...props} />
 	),
 }));
