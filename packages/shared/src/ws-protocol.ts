@@ -8,6 +8,8 @@ export type ClientMessage =
 	| { type: "keystroke"; key: "space"; t: number }
 	| { type: "keystroke"; key: "backspace"; t: number }
 	| { type: "keystroke"; key: "ctrl_backspace"; t: number }
+	| { type: "join_ranked_queue"; duration: number }
+	| { type: "leave_ranked_queue" }
 	| { type: "pong"; t: number };
 
 // Server → Client
@@ -57,11 +59,21 @@ export type ServerMessage =
 			accuracy: number;
 			rawWpm: number;
 	  }
-	| { type: "game_result"; winner: string | null; players: PlayerResult[] }
+	| { type: "game_result"; winner: string | null; players: PlayerResult[]; ranked?: boolean; ratingChanges?: RatingChange[] }
 	| { type: "opponent_disconnected" }
 	| { type: "opponent_reconnected" }
 	| { type: "error"; message: string }
-	| { type: "ping"; t: number };
+	| { type: "ping"; t: number }
+	| { type: "ranked_queue_status"; position: number; estimatedWait: number; searchRange: number }
+	| { type: "rating_update"; oldRating: number; newRating: number; oldRd: number; newRd: number; ratingChange: number }
+	| { type: "presence_update"; online: number; queuing: number; inGame: number };
+
+export interface RatingChange {
+	userId: string;
+	oldRating: number;
+	newRating: number;
+	change: number;
+}
 
 export interface PlayerResult {
 	userId: string;
@@ -71,5 +83,8 @@ export interface PlayerResult {
 	rawWpm: number;
 	completed: boolean;
 	score: number;
+	wordPoints?: number;
+	wpmBonus?: number;
+	timeBonus?: number;
 	completedAt?: number;
 }

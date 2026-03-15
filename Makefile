@@ -1,3 +1,6 @@
+include .env
+export
+
 .PHONY: install dev dev-stop up down build logs ps migrate generate studio clean db-push test-db test test-api test-frontend test-ws bench-ws
 
 # Install all dependencies
@@ -69,6 +72,14 @@ generate:
 # Push schema directly to database (no migration file)
 db-push:
 	cd apps/api && bunx drizzle-kit push
+
+# Reset database: drop, recreate, push schema
+db-reset:
+	docker compose -f docker-compose.dev.yml exec postgres psql -U postgres -c \
+		"SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'typing_game' AND pid <> pg_backend_pid();"
+	docker compose -f docker-compose.dev.yml exec postgres psql -U postgres -c "DROP DATABASE IF EXISTS typing_game"
+	docker compose -f docker-compose.dev.yml exec postgres psql -U postgres -c "CREATE DATABASE typing_game"
+	$(MAKE) db-push
 
 # Open Drizzle Studio
 studio:

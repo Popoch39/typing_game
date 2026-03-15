@@ -5,7 +5,8 @@
 	"exports": {
 		".": "./src/index.ts",
 		"./ws-protocol": "./src/ws-protocol.ts",
-		"./scoring-engine": "./src/scoring-engine.ts"
+		"./scoring-engine": "./src/scoring-engine.ts",
+		"./glicko2": "./src/glicko2.ts"
 	},
 	"devDependencies": {
 		"@repo/typescript-config": "*",

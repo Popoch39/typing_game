@@ -138,6 +138,7 @@ export function useMultiplayerGame() {
 
 	const handleCancel = useCallback(() => {
 		mp.leaveQueue();
+		mp.leaveRankedQueue();
 		mp.disconnect();
 		connectedRef.current = false;
 		const token = session?.session.token;

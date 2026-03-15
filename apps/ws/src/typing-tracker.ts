@@ -1,4 +1,7 @@
-import { ScoringEngine } from "@repo/shared/scoring-engine";
+import {
+	type FinalScoreBreakdown,
+	ScoringEngine,
+} from "@repo/shared/scoring-engine";
 
 export interface TrackerStats {
 	wpm: number;
@@ -163,7 +166,7 @@ export class ServerTypingTracker {
 		wpm: number,
 		wordsCompleted: number,
 		remainingSeconds: number,
-	): number {
+	): FinalScoreBreakdown {
 		return this.scoringEngine.computeFinalScore(
 			wpm,
 			wordsCompleted,

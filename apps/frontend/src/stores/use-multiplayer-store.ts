@@ -14,4 +14,7 @@ export const useMultiplayerStore = create<MultiplayerState>(() => ({
 	opponentDisconnected: false,
 	selfStats: null,
 	selfComplete: false,
+	presence: { online: 0, queuing: 0, inGame: 0 },
+	isRanked: false,
+	ratingChange: null,
 }));

@@ -1,6 +1,8 @@
 export {
 	accounts,
 	gameScores,
+	matchResults,
+	playerRatings,
 	sessions,
 	users,
 	verifications,

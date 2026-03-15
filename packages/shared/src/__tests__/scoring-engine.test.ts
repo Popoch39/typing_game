@@ -131,37 +131,47 @@ describe("ScoringEngine", () => {
 	});
 
 	describe("computeFinalScore", () => {
-		it("returns totalScore + wpmBonus when no time remaining", () => {
+		it("returns breakdown with totalScore + wpmBonus when no time remaining", () => {
 			engine.scoreWord(5, false); // totalScore = 37
 			// wpmBonus = floor(60 * 1 * 2) = 120
-			const final = engine.computeFinalScore(60, 1, 0);
-			expect(final).toBe(37 + 120);
+			const result = engine.computeFinalScore(60, 1, 0);
+			expect(result.wordPoints).toBe(37);
+			expect(result.wpmBonus).toBe(120);
+			expect(result.timeBonus).toBe(0);
+			expect(result.total).toBe(37 + 120);
 		});
 
 		it("wpmBonus scales with wordsCompleted", () => {
 			engine.scoreWord(5, false); // totalScore = 37
 			// wpmBonus = floor(50 * 5 * 2) = 500
-			const final = engine.computeFinalScore(50, 5, 0);
-			expect(final).toBe(37 + 500);
+			const result = engine.computeFinalScore(50, 5, 0);
+			expect(result.wordPoints).toBe(37);
+			expect(result.wpmBonus).toBe(500);
+			expect(result.total).toBe(37 + 500);
 		});
 
 		it("adds flat time bonus when remaining seconds > 0", () => {
 			engine.scoreWord(5, false); // totalScore = 37
 			// wpmBonus = floor(50 * 1 * 2) = 100, timeBonus = floor(10 * 10) = 100
-			const final = engine.computeFinalScore(50, 1, 10);
-			expect(final).toBe(37 + 100 + 100);
+			const result = engine.computeFinalScore(50, 1, 10);
+			expect(result.wordPoints).toBe(37);
+			expect(result.wpmBonus).toBe(100);
+			expect(result.timeBonus).toBe(100);
+			expect(result.total).toBe(37 + 100 + 100);
 		});
 
 		it("no time bonus when remaining seconds = 0", () => {
 			engine.scoreWord(5, false); // totalScore = 37
-			const final = engine.computeFinalScore(50, 1, 0);
-			expect(final).toBe(37 + 100);
+			const result = engine.computeFinalScore(50, 1, 0);
+			expect(result.timeBonus).toBe(0);
+			expect(result.total).toBe(37 + 100);
 		});
 
 		it("wpmBonus is 0 when wpm is 0", () => {
 			engine.scoreWord(5, false); // totalScore = 37
-			const final = engine.computeFinalScore(0, 5, 0);
-			expect(final).toBe(37);
+			const result = engine.computeFinalScore(0, 5, 0);
+			expect(result.wpmBonus).toBe(0);
+			expect(result.total).toBe(37);
 		});
 	});
 

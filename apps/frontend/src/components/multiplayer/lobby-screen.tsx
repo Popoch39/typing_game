@@ -10,16 +10,18 @@ const DURATIONS = [15, 30, 60, 120];
 
 export function LobbyScreen({
 	onJoinQueue,
+	onJoinRankedQueue,
 	onCreateRoom,
 	onJoinRoom,
 }: {
 	onJoinQueue: (duration: number) => void;
+	onJoinRankedQueue: (duration: number) => void;
 	onCreateRoom: (duration: number) => void;
 	onJoinRoom: (code: string) => void;
 }) {
 	const [duration, setDuration] = useState(30);
 	const [roomCode, setRoomCode] = useState("");
-	const [tab, setTab] = useState<"matchmaking" | "private">("matchmaking");
+	const [tab, setTab] = useState<"casual" | "ranked" | "private">("casual");
 
 	return (
 		<Card className="mx-auto w-full max-w-md">
@@ -53,15 +55,27 @@ export function LobbyScreen({
 				<div className="flex rounded-lg bg-muted p-1">
 					<button
 						type="button"
-						onClick={() => setTab("matchmaking")}
+						onClick={() => setTab("casual")}
 						className={cn(
 							"flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
-							tab === "matchmaking"
+							tab === "casual"
 								? "bg-background text-foreground shadow-sm"
 								: "text-muted-foreground",
 						)}
 					>
-						Matchmaking
+						Casual
+					</button>
+					<button
+						type="button"
+						onClick={() => setTab("ranked")}
+						className={cn(
+							"flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+							tab === "ranked"
+								? "bg-background text-foreground shadow-sm"
+								: "text-muted-foreground",
+						)}
+					>
+						Ranked
 					</button>
 					<button
 						type="button"
@@ -77,11 +91,22 @@ export function LobbyScreen({
 					</button>
 				</div>
 
-				{tab === "matchmaking" ? (
+				{tab === "casual" && (
 					<Button className="w-full" onClick={() => onJoinQueue(duration)}>
 						Find Match
 					</Button>
-				) : (
+				)}
+
+				{tab === "ranked" && (
+					<Button
+						className="w-full"
+						onClick={() => onJoinRankedQueue(duration)}
+					>
+						Find Ranked Match
+					</Button>
+				)}
+
+				{tab === "private" && (
 					<div className="space-y-3">
 						<Button className="w-full" onClick={() => onCreateRoom(duration)}>
 							Create Room

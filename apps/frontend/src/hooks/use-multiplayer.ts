@@ -54,5 +54,7 @@ export function useMultiplayer() {
 				| { key: "backspace" }
 				| { key: "ctrl_backspace" },
 		) => client.sendKeystroke(data),
+		joinRankedQueue: (duration: number) => client.joinRankedQueue(duration),
+		leaveRankedQueue: () => client.leaveRankedQueue(),
 	};
 }

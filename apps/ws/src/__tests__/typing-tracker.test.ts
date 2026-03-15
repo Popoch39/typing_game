@@ -324,7 +324,7 @@ describe("ServerTypingTracker", () => {
 			expect(typeof t.completedAt).toBe("number");
 		});
 
-		it("computeFinalScore works", () => {
+		it("computeFinalScore returns breakdown", () => {
 			const t = createTracker(["hello"]);
 			typeWord(t, "hello");
 			t.handleSpace();
@@ -332,9 +332,14 @@ describe("ServerTypingTracker", () => {
 			// Perfect: base=25 * 1.5 * 1.0 = 37 total
 			expect(stats.score).toBe(37);
 			// Final with wpm=50, 1 word: 37 + floor(50*1*2) = 37 + 100 = 137
-			expect(t.computeFinalScore(50, 1, 0)).toBe(137);
+			const r1 = t.computeFinalScore(50, 1, 0);
+			expect(r1.wordPoints).toBe(37);
+			expect(r1.wpmBonus).toBe(100);
+			expect(r1.timeBonus).toBe(0);
+			expect(r1.total).toBe(137);
 			// Final with wpm=100, 1 word: 37 + floor(100*1*2) = 37 + 200 = 237
-			expect(t.computeFinalScore(100, 1, 0)).toBe(237);
+			const r2 = t.computeFinalScore(100, 1, 0);
+			expect(r2.total).toBe(237);
 		});
 	});
 

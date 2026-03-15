@@ -73,3 +73,47 @@ export const gameScores = pgTable("game_scores", {
 	mode: text("mode").notNull(),
 	createdAt: timestamp("created_at").notNull().defaultNow(),
 });
+
+// ── Rating & Match tables ──
+
+export const playerRatings = pgTable("player_ratings", {
+	userId: uuid("user_id")
+		.primaryKey()
+		.references(() => users.id, { onDelete: "cascade" }),
+	rating: real("rating").notNull().default(1500),
+	rd: real("rd").notNull().default(350),
+	volatility: real("volatility").notNull().default(0.06),
+	gamesPlayed: integer("games_played").notNull().default(0),
+	lastGameAt: timestamp("last_game_at"),
+	createdAt: timestamp("created_at").notNull().defaultNow(),
+	updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const matchResults = pgTable("match_results", {
+	id: uuid("id").defaultRandom().primaryKey(),
+	roomId: text("room_id").notNull().unique(),
+	player1Id: uuid("player1_id")
+		.notNull()
+		.references(() => users.id, { onDelete: "cascade" }),
+	player2Id: uuid("player2_id")
+		.notNull()
+		.references(() => users.id, { onDelete: "cascade" }),
+	winnerId: uuid("winner_id"),
+	player1Score: integer("player1_score").notNull(),
+	player2Score: integer("player2_score").notNull(),
+	player1Wpm: integer("player1_wpm").notNull(),
+	player2Wpm: integer("player2_wpm").notNull(),
+	player1Accuracy: real("player1_accuracy").notNull(),
+	player2Accuracy: real("player2_accuracy").notNull(),
+	player1RatingBefore: real("player1_rating_before"),
+	player1RatingAfter: real("player1_rating_after"),
+	player1RdBefore: real("player1_rd_before"),
+	player1RdAfter: real("player1_rd_after"),
+	player2RatingBefore: real("player2_rating_before"),
+	player2RatingAfter: real("player2_rating_after"),
+	player2RdBefore: real("player2_rd_before"),
+	player2RdAfter: real("player2_rd_after"),
+	mode: text("mode").notNull(),
+	duration: integer("duration").notNull(),
+	createdAt: timestamp("created_at").notNull().defaultNow(),
+});

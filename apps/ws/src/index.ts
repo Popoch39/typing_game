@@ -1,12 +1,89 @@
 import { Elysia, t } from "elysia";
 import { validateSession } from "./auth";
 import { Matchmaking } from "./matchmaking";
-import type { ClientMessage, Player } from "./types";
+import { PresenceTracker } from "./presence";
+import { initRedis, getRedis, getRedisSub } from "./redis";
+import type { ClientMessage, Player, PlayerResult, RatingChange } from "./types";
 import { log } from "./logger";
 
 const PORT = Number(process.env.PORT) || 3002;
+const API_URL = process.env.API_INTERNAL_URL || "http://localhost:3001";
+const INTERNAL_SECRET = process.env.INTERNAL_SECRET || "";
 
-const matchmaking = new Matchmaking();
+let presence: PresenceTracker;
+
+async function handleGameFinish(
+	roomId: string,
+	ranked: boolean,
+	winner: string | null,
+	players: PlayerResult[],
+	duration: number,
+): Promise<RatingChange[] | null> {
+	if (players.length !== 2) return null;
+	const [p1, p2] = players;
+	try {
+		const res = await fetch(`${API_URL}/api/rating/internal/match-result`, {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+				"X-Internal-Secret": INTERNAL_SECRET,
+			},
+			body: JSON.stringify({
+				roomId,
+				player1Id: p1.userId,
+				player2Id: p2.userId,
+				winnerId: winner,
+				player1Score: p1.score,
+				player2Score: p2.score,
+				player1Wpm: p1.wpm,
+				player2Wpm: p2.wpm,
+				player1Accuracy: p1.accuracy,
+				player2Accuracy: p2.accuracy,
+				mode: ranked ? "ranked" : "casual",
+				duration,
+			}),
+		});
+		if (!res.ok) {
+			console.error(
+				"[game-finish] API error:",
+				res.status,
+				await res.text(),
+			);
+			return null;
+		}
+		if (ranked) {
+			const data = await res.json() as {
+				ratings: {
+					player1: { before: number; after: number } | null;
+					player2: { before: number; after: number } | null;
+				};
+			};
+			const r = data.ratings;
+			if (r.player1 && r.player2) {
+				return [
+					{
+						userId: p1.userId,
+						oldRating: r.player1.before,
+						newRating: r.player1.after,
+						change: Math.round(r.player1.after - r.player1.before),
+					},
+					{
+						userId: p2.userId,
+						oldRating: r.player2.before,
+						newRating: r.player2.after,
+						change: Math.round(r.player2.after - r.player2.before),
+					},
+				];
+			}
+		}
+		return null;
+	} catch (err) {
+		console.error("[game-finish] Failed to persist match:", err);
+		return null;
+	}
+}
+
+let matchmaking: Matchmaking;
 
 // Track authenticated players by ws raw object reference
 const wsPlayers = new WeakMap<object, Player>();
@@ -55,8 +132,9 @@ const app = new Elysia()
 			};
 
 			wsPlayers.set(ws.raw, player);
+			await presence.connect(user.userId, user.name, player.ws);
 		},
-		message(ws, raw) {
+		async message(ws, raw) {
 			const player = wsPlayers.get(ws.raw);
 			if (!player) return;
 
@@ -83,17 +161,37 @@ const app = new Elysia()
 				case "join_room":
 					matchmaking.joinRoom(player, msg.code);
 					break;
+				case "join_ranked_queue": {
+					let rating = 1500;
+					try {
+						const res = await fetch(
+							`${API_URL}/api/rating/${player.userId}`,
+						);
+						if (res.ok) {
+							const data = (await res.json()) as { rating: number };
+							rating = data.rating;
+						}
+					} catch {
+						// Use default rating
+					}
+					matchmaking.joinRankedQueue(player, msg.duration, rating);
+					break;
+				}
+				case "leave_ranked_queue":
+					matchmaking.leaveRankedQueue(player.userId);
+					break;
 				case "keystroke":
 				case "pong":
 					matchmaking.handleMessage(player.userId, msg);
 					break;
 			}
 		},
-		close(ws) {
+		async close(ws) {
 			const player = wsPlayers.get(ws.raw);
 			if (player) {
 				log.disc(player.userId, player.name);
 				matchmaking.handleDisconnect(player.userId);
+				await presence.disconnect(player.userId);
 			}
 			wsPlayers.delete(ws.raw);
 		},
@@ -102,6 +200,25 @@ const app = new Elysia()
 
 log.info(`WS server running on :${PORT}`);
 log.info(`Dashboard: http://localhost:${PORT}/dashboard`);
+
+initRedis()
+	.then(async () => {
+		const redis = getRedis();
+		presence = new PresenceTracker(redis);
+		await presence.cleanup();
+		matchmaking = new Matchmaking(presence, handleGameFinish);
+
+		matchmaking.initRanked();
+		const sub = getRedisSub();
+		sub.subscribe("elo:update");
+		sub.on("message", (_channel, _message) => {
+			// Rating updates forwarded via game_result messages
+		});
+		log.info("Ranked matchmaking enabled");
+	})
+	.catch((err) => {
+		console.warn("[redis] Init failed, ranked matchmaking disabled:", err);
+	});
 
 // --- Dashboard HTML ---
 

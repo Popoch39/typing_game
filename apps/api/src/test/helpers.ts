@@ -4,6 +4,7 @@ import { Elysia } from "elysia";
 import { db } from "../db";
 import { auth } from "../lib/auth";
 import { gameRoutes } from "../routes/game";
+import { ratingRoutes } from "../routes/rating";
 
 export function createTestApp() {
 	return new Elysia()
@@ -17,6 +18,7 @@ export function createTestApp() {
 		)
 		.mount(auth.handler)
 		.use(gameRoutes)
+		.use(ratingRoutes)
 		.get("/health", () => ({ status: "bruh" }));
 }
 
@@ -54,6 +56,6 @@ export async function getAuthHeaders(app: ReturnType<typeof createTestApp>) {
 
 export async function truncateAll() {
 	await db.execute(
-		sql`TRUNCATE TABLE game_scores, sessions, accounts, verifications, users CASCADE`,
+		sql`TRUNCATE TABLE match_results, player_ratings, game_scores, sessions, accounts, verifications, users CASCADE`,
 	);
 }

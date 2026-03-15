@@ -1,3 +1,10 @@
+export interface FinalScoreBreakdown {
+	wordPoints: number;
+	wpmBonus: number;
+	timeBonus: number;
+	total: number;
+}
+
 export interface WordScoreResult {
 	wordScore: number;
 	combo: number;
@@ -39,10 +46,11 @@ export class ScoringEngine {
 		return { wordScore, combo: this.combo, isPerfect };
 	}
 
-	computeFinalScore(wpm: number, wordsCompleted: number, remainingSeconds: number): number {
+	computeFinalScore(wpm: number, wordsCompleted: number, remainingSeconds: number): FinalScoreBreakdown {
+		const wordPoints = this.totalScore;
 		const wpmBonus = Math.floor(wpm * wordsCompleted * 2);
 		const timeBonus = remainingSeconds > 0 ? Math.floor(remainingSeconds * 10) : 0;
-		return this.totalScore + wpmBonus + timeBonus;
+		return { wordPoints, wpmBonus, timeBonus, total: wordPoints + wpmBonus + timeBonus };
 	}
 
 	skipWord(): WordScoreResult {

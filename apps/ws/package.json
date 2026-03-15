@@ -17,6 +17,7 @@
 		"@repo/shared": "*",
 		"drizzle-orm": "^0.44",
 		"elysia": "^1.3",
+		"ioredis": "^5.10.0",
 		"postgres": "^3.4"
 	},
 	"devDependencies": {

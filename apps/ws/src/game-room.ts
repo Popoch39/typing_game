@@ -1,4 +1,4 @@
-import type { Player, PlayerResult, ServerMessage } from "./types";
+import type { Player, PlayerResult, RatingChange, ServerMessage } from "./types";
 import { generateWordList } from "./word-list";
 import { ServerTypingTracker } from "./typing-tracker";
 import { log } from "./logger";
@@ -22,6 +22,9 @@ interface PlayerState {
 	tolerance: number;
 	score: number;
 	combo: number;
+	wordPoints: number;
+	wpmBonus: number;
+	timeBonus: number;
 	completedAt: number | null;
 }
 
@@ -29,6 +32,7 @@ export class GameRoom {
 	readonly id: string;
 	readonly code: string | null;
 	readonly duration: number;
+	readonly ranked: boolean;
 	private state: RoomState = "waiting";
 	private players = new Map<string, PlayerState>();
 	private words: string[] = [];
@@ -37,17 +41,36 @@ export class GameRoom {
 	private countdownTimers: ReturnType<typeof setTimeout>[] = [];
 	private pingInterval: ReturnType<typeof setInterval> | null = null;
 	private onDestroy: (roomId: string) => void;
+	private onFinish:
+		| ((
+				roomId: string,
+				ranked: boolean,
+				winner: string | null,
+				players: PlayerResult[],
+				duration: number,
+		  ) => Promise<RatingChange[] | null>)
+		| null;
 
 	constructor(
 		id: string,
 		duration: number,
 		onDestroy: (roomId: string) => void,
 		code: string | null = null,
+		ranked = false,
+		onFinish?: (
+			roomId: string,
+			ranked: boolean,
+			winner: string | null,
+			players: PlayerResult[],
+			duration: number,
+		) => Promise<RatingChange[] | null>,
 	) {
 		this.id = id;
 		this.duration = duration;
 		this.onDestroy = onDestroy;
 		this.code = code;
+		this.ranked = ranked;
+		this.onFinish = onFinish ?? null;
 	}
 
 	get playerCount() {
@@ -94,6 +117,9 @@ export class GameRoom {
 			tolerance: 500,
 			score: 0,
 			combo: 1.0,
+			wordPoints: 0,
+			wpmBonus: 0,
+			timeBonus: 0,
 			completedAt: null,
 		});
 
@@ -158,18 +184,29 @@ export class GameRoom {
 		}
 	}
 
-	private handleDisconnectTimeout(userId: string) {
+	private async handleDisconnectTimeout(userId: string) {
+		if (this.state === "finished") return;
+		this.state = "finished";
+
 		const opponent = this.getOpponent(userId);
 		if (!opponent) return;
 
 		log.room("dc-timeout", this.id, `${userId.slice(0, 8)} forfeited`);
 
-		this.state = "finished";
-		const results = this.buildResults(opponent.player.userId);
+		if (this.gameTimer) {
+			clearTimeout(this.gameTimer);
+			this.gameTimer = null;
+		}
+
+		const winner = opponent.player.userId;
+		const results = this.buildResults(winner);
+
+		const ratingChanges = await this.onFinish?.(this.id, this.ranked, winner, results, this.duration);
 		this.broadcast({
 			type: "game_result",
-			winner: opponent.player.userId,
+			winner,
 			players: results,
+			...(this.ranked && ratingChanges ? { ranked: true, ratingChanges } : {}),
 		});
 		this.cleanup();
 		this.onDestroy(this.id);
@@ -267,7 +304,15 @@ export class GameRoom {
 			// Compute final score with time bonus
 			const elapsed = (t - this.gameStartTime) / 1000;
 			const remainingSeconds = Math.max(0, this.duration - elapsed);
-			ps.score = ps.tracker.computeFinalScore(stats.wpm, stats.wordIndex, remainingSeconds);
+			const breakdown = ps.tracker.computeFinalScore(
+				stats.wpm,
+				stats.wordIndex,
+				remainingSeconds,
+			);
+			ps.score = breakdown.total;
+			ps.wordPoints = breakdown.wordPoints;
+			ps.wpmBonus = breakdown.wpmBonus;
+			ps.timeBonus = breakdown.timeBonus;
 
 			log.room(
 				"complete",
@@ -348,7 +393,7 @@ export class GameRoom {
 		}, this.duration * 1000);
 	}
 
-	private finishGame() {
+	private async finishGame() {
 		if (this.state === "finished") return;
 		this.state = "finished";
 
@@ -366,7 +411,15 @@ export class GameRoom {
 				ps.accuracy = stats.accuracy;
 				ps.rawWpm = stats.rawWpm;
 				// No time bonus for non-completers (remainingSeconds = 0)
-				ps.score = ps.tracker.computeFinalScore(stats.wpm, stats.wordIndex, 0);
+				const breakdown = ps.tracker.computeFinalScore(
+					stats.wpm,
+					stats.wordIndex,
+					0,
+				);
+				ps.score = breakdown.total;
+				ps.wordPoints = breakdown.wordPoints;
+				ps.wpmBonus = breakdown.wpmBonus;
+				ps.timeBonus = breakdown.timeBonus;
 			}
 		}
 
@@ -397,7 +450,13 @@ export class GameRoom {
 			: "tie";
 		log.room("finish", this.id, `winner=${winnerName}`);
 
-		this.broadcast({ type: "game_result", winner, players: results });
+		const ratingChanges = await this.onFinish?.(this.id, this.ranked, winner, results, this.duration);
+		this.broadcast({
+			type: "game_result",
+			winner,
+			players: results,
+			...(this.ranked && ratingChanges ? { ranked: true, ratingChanges } : {}),
+		});
 		this.cleanup();
 		this.onDestroy(this.id);
 	}
@@ -411,6 +470,9 @@ export class GameRoom {
 			rawWpm: ps.rawWpm,
 			completed: ps.completed,
 			score: ps.score,
+			wordPoints: ps.wordPoints,
+			wpmBonus: ps.wpmBonus,
+			timeBonus: ps.timeBonus,
 			completedAt: ps.completedAt ?? undefined,
 		}));
 	}

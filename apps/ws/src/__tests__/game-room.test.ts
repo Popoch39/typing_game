@@ -45,6 +45,11 @@ async function waitForCountdown() {
 	await new Promise((r) => setTimeout(r, 3200));
 }
 
+/** Wait a tick for async finishGame to resolve */
+async function waitForFinish() {
+	await new Promise((r) => setTimeout(r, 50));
+}
+
 describe("GameRoom", () => {
 	let destroyMock: ReturnType<typeof mock>;
 	let room: GameRoom;
@@ -165,8 +170,8 @@ describe("GameRoom", () => {
 			room.handleDisconnect("p1");
 			expect(sentOfType(p2, "opponent_disconnected")).toHaveLength(1);
 
-			// Wait for grace period (5s)
-			await new Promise((r) => setTimeout(r, 5200));
+			// Wait for grace period (5s) + async finish
+			await new Promise((r) => setTimeout(r, 5300));
 			expect(room.roomState).toBe("finished");
 			const results = sentOfType(p2, "game_result");
 			expect(results).toHaveLength(1);
@@ -242,6 +247,7 @@ describe("GameRoom", () => {
 
 			typeAllWords(room, "p1", words);
 			typeAllWords(room, "p2", words);
+			await waitForFinish();
 
 			expect(sentOfType(p1, "game_result")).toHaveLength(1);
 			expect(sentOfType(p2, "game_result")).toHaveLength(1);
@@ -297,6 +303,7 @@ describe("GameRoom", () => {
 			await new Promise((r) => setTimeout(r, 200));
 
 			typeAllWords(room, "p2", words);
+			await waitForFinish();
 
 			const results = sentOfType(p1, "game_result");
 			expect(results).toHaveLength(1);
@@ -311,8 +318,8 @@ describe("GameRoom", () => {
 			shortRoom.addPlayer(p1);
 			shortRoom.addPlayer(p2);
 
-			// Wait for countdown (3s) + game duration (1s)
-			await new Promise((r) => setTimeout(r, 4400));
+			// Wait for countdown (3s) + game duration (1s) + async finish
+			await new Promise((r) => setTimeout(r, 4500));
 
 			expect(shortRoom.roomState).toBe("finished");
 			const results = sentOfType(p1, "game_result");
@@ -333,8 +340,8 @@ describe("GameRoom", () => {
 			const words = getWords(p1);
 			typeAllWords(shortRoom, "p1", words);
 
-			// Wait for timer expiry
-			await new Promise((r) => setTimeout(r, 1200));
+			// Wait for timer expiry + async finish
+			await new Promise((r) => setTimeout(r, 1300));
 
 			expect(shortRoom.roomState).toBe("finished");
 			const results = sentOfType(p1, "game_result");
@@ -354,6 +361,7 @@ describe("GameRoom", () => {
 			const words = getWords(p1);
 			typeAllWords(shortRoom, "p1", words);
 			typeAllWords(shortRoom, "p2", words);
+			await waitForFinish();
 
 			const count1 = sentOfType(p1, "game_result").length;
 
@@ -380,8 +388,8 @@ describe("GameRoom", () => {
 			}
 			shortRoom.handleKeystroke("p1", { key: "space" }, Date.now());
 
-			// Wait for timer
-			await new Promise((r) => setTimeout(r, 1200));
+			// Wait for timer + async finish
+			await new Promise((r) => setTimeout(r, 1300));
 
 			expect(shortRoom.roomState).toBe("finished");
 			const results = sentOfType(p1, "game_result");

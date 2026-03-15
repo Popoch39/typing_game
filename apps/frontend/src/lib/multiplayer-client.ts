@@ -1,6 +1,7 @@
 import type {
 	ClientMessage,
 	PlayerResult,
+	RatingChange,
 	ServerMessage,
 } from "@repo/shared/ws-protocol";
 
@@ -55,6 +56,9 @@ export interface MultiplayerState {
 	opponentDisconnected: boolean;
 	selfStats: SelfStats | null;
 	selfComplete: boolean;
+	presence: { online: number; queuing: number; inGame: number };
+	isRanked: boolean;
+	ratingChange: RatingChange[] | null;
 }
 
 export interface MultiplayerClientCallbacks {
@@ -78,6 +82,9 @@ const initialState: MultiplayerState = {
 	opponentDisconnected: false,
 	selfStats: null,
 	selfComplete: false,
+	presence: { online: 0, queuing: 0, inGame: 0 },
+	isRanked: false,
+	ratingChange: null,
 };
 
 // --- Logger ---
@@ -146,7 +153,7 @@ export class MultiplayerClient {
 				log("recv", "invalid JSON:", event.data);
 				return;
 			}
-			if (msg.type !== "opponent_progress" && msg.type !== "self_stats") {
+			if (msg.type !== "opponent_progress" && msg.type !== "self_stats" && msg.type !== "presence_update") {
 				log("recv", `← ${msg.type}`, msg);
 			}
 			this.handleMessage(msg);
@@ -187,6 +194,15 @@ export class MultiplayerClient {
 
 	leaveQueue(): void {
 		this.send({ type: "leave_queue" });
+		this.setState({ status: "idle" });
+	}
+
+	joinRankedQueue(duration: number): void {
+		this.send({ type: "join_ranked_queue", duration });
+	}
+
+	leaveRankedQueue(): void {
+		this.send({ type: "leave_ranked_queue" });
 		this.setState({ status: "idle" });
 	}
 
@@ -351,10 +367,18 @@ export class MultiplayerClient {
 							},
 				});
 				break;
+			case "ranked_queue_status":
+				this.setState({ status: "queuing", isRanked: true });
+				break;
+			case "rating_update":
+				// Handled via game_result ratingChanges
+				break;
 			case "game_result":
 				this.setState({
 					gameResult: { winner: msg.winner, players: msg.players },
 					status: "finished",
+					isRanked: msg.ranked ?? false,
+					ratingChange: msg.ratingChanges ?? null,
 				});
 				break;
 			case "opponent_disconnected":
@@ -365,6 +389,9 @@ export class MultiplayerClient {
 				break;
 			case "ping":
 				this.send({ type: "pong", t: (msg as any).t } as ClientMessage);
+				break;
+			case "presence_update":
+				this.setState({ presence: { online: msg.online, queuing: msg.queuing, inGame: msg.inGame } });
 				break;
 			case "error":
 				this.setState({ error: msg.message });
