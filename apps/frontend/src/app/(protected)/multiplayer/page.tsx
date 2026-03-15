@@ -4,9 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { CountdownScreen } from "@/components/multiplayer/countdown-screen";
 import { GameResultScreen } from "@/components/multiplayer/game-result-screen/game-result-screen";
-import { OpponentProgress } from "@/components/multiplayer/opponent-progress";
-import { ComboDisplay } from "@/components/typing/combo-display";
-import { TypingArea } from "@/components/typing/typing-area";
+import { MultiplayerPlayingView } from "@/components/multiplayer/multiplayer-playing-view";
 import { useMultiplayerGame } from "@/hooks/use-multiplayer-game";
 
 export default function MultiplayerPage() {
@@ -46,34 +44,14 @@ export default function MultiplayerPage() {
 			{mp.status === "countdown" && <CountdownScreen />}
 
 			{mp.status === "playing" && (
-				<div className="w-full space-y-6">
-					<OpponentProgress />
-					<div className="flex items-center justify-between">
-						<div className="flex items-center gap-6 font-mono text-2xl text-muted-foreground">
-							<span className="tabular-nums text-primary">
-								{typingStore.isRunning
-									? typingStore.timeRemaining
-									: mp.gameDuration}
-							</span>
-							{typingStore.isRunning && (
-								<>
-									<span className="tabular-nums">{typingStore.wpm} wpm</span>
-									<span className="tabular-nums">{typingStore.accuracy}%</span>
-									<span className="tabular-nums">{typingStore.score}</span>
-								</>
-							)}
-						</div>
-					</div>
-					<div className="relative">
-						<ComboDisplay />
-						<TypingArea />
-					</div>
-					{!typingStore.isRunning && (
-						<p className="text-center text-sm text-muted-foreground">
-							Start typing to begin...
-						</p>
-					)}
-				</div>
+				<MultiplayerPlayingView
+					timeRemaining={typingStore.timeRemaining}
+					gameDuration={mp.gameDuration}
+					isRunning={typingStore.isRunning}
+					wpm={typingStore.wpm}
+					accuracy={typingStore.accuracy}
+					score={typingStore.score}
+				/>
 			)}
 
 			{mp.status === "finished" && (
