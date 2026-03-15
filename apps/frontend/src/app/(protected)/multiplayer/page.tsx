@@ -1,8 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { CountdownScreen } from "@/components/multiplayer/countdown-screen";
-import { GameResultScreen } from "@/components/multiplayer/game-result-screen";
+import { GameResultScreen } from "@/components/multiplayer/game-result-screen/game-result-screen";
 import { OpponentProgress } from "@/components/multiplayer/opponent-progress";
 import { ComboDisplay } from "@/components/typing/combo-display";
 import { TypingArea } from "@/components/typing/typing-area";
@@ -12,13 +13,19 @@ export default function MultiplayerPage() {
 	const router = useRouter();
 	const { mp, typingStore, handlePlayAgain } = useMultiplayerGame();
 
+	const shouldRedirect = mp.status === "idle" || mp.status === "connecting";
+
+	useEffect(() => {
+		if (shouldRedirect) {
+			router.push("/");
+		}
+	}, [shouldRedirect, router]);
+
 	const handleBackToDashboard = () => {
 		router.push("/");
 	};
 
-	// If idle (no game in progress), redirect to dashboard
-	if (mp.status === "idle" || mp.status === "connecting") {
-		router.push("/");
+	if (shouldRedirect) {
 		return null;
 	}
 
