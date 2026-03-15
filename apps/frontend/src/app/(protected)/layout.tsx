@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { type ReactNode, useEffect, useRef } from "react";
-import { Sidebar } from "@/components/sidebar";
+import { Sidebar } from "@/components/layout/sidebar/sidebar";
 import { useSession } from "@/hooks/use-auth";
 import { useMultiplayer, useMultiplayerStore } from "@/hooks/use-multiplayer";
 import { cn } from "@/lib/utils";
