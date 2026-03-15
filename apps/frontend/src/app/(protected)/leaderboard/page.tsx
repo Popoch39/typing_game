@@ -1,6 +1,6 @@
 "use client";
 
-import { RankBadge } from "@/components/rank-badge";
+import { RankBadge } from "@/components/rank/rank-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLeaderboard } from "@/hooks/use-rating";
 
