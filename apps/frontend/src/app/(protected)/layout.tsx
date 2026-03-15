@@ -1,21 +1,47 @@
 "use client";
 
-import { OnlinePlayers } from "@/components/online-players";
-import { PlaySection } from "@/components/play-section";
-import { QuickStats } from "@/components/quick-stats";
-import { RecentMatches } from "@/components/recent-matches";
+import { useRouter } from "next/navigation";
+import { type ReactNode, useEffect, useRef } from "react";
 import { Sidebar } from "@/components/sidebar";
 import { useSession } from "@/hooks/use-auth";
-import { usePresence } from "@/hooks/use-presence";
+import { useMultiplayer, useMultiplayerStore } from "@/hooks/use-multiplayer";
 import { cn } from "@/lib/utils";
 import { SidebarProvider, useSidebar } from "@/providers/sidebar-provider";
 
-function MainContent() {
+const GAME_DURATION = 15;
+
+function Shell({ children }: { children: ReactNode }) {
 	const { isCollapsed } = useSidebar();
 	const { data: session } = useSession();
-	usePresence();
+	const router = useRouter();
+	const mp = useMultiplayer();
+	const connectedRef = useRef(false);
 
-	const userName = session?.user?.name ?? "Player";
+	const sessionToken = session?.session?.token;
+
+	// Connect WS when session is available
+	// biome-ignore lint/correctness/useExhaustiveDependencies: mp methods are stable refs
+	useEffect(() => {
+		if (!sessionToken || connectedRef.current) return;
+		mp.connect(sessionToken);
+		connectedRef.current = true;
+
+		return () => {
+			const currentStatus = useMultiplayerStore.getState().status;
+			if (currentStatus === "idle" || currentStatus === "connecting") {
+				mp.disconnect();
+				connectedRef.current = false;
+			}
+		};
+	}, [sessionToken]);
+
+	// Auto-navigate to /multiplayer when countdown starts
+	const mpStatus = useMultiplayerStore((s) => s.status);
+	useEffect(() => {
+		if (mpStatus === "countdown" || mpStatus === "playing") {
+			router.push("/multiplayer");
+		}
+	}, [mpStatus, router]);
 
 	return (
 		<main
@@ -25,42 +51,17 @@ function MainContent() {
 				isCollapsed ? "lg:pl-[72px]" : "lg:pl-64",
 			)}
 		>
-			<div className="p-4 md:p-6">
-				{/* Header */}
-				<div className="mb-6 md:mb-8 animate-slide-up">
-					<h1 className="text-2xl md:text-3xl font-bold text-foreground text-balance">
-						Welcome back, <span className="text-primary">{userName}</span>
-					</h1>
-					<p className="text-muted-foreground mt-1">
-						Ready for your next typing battle?
-					</p>
-				</div>
-
-				{/* Main Grid */}
-				<div className="grid gap-4 md:gap-6 lg:grid-cols-3">
-					{/* Left Column - Play Options */}
-					<div className="lg:col-span-2 space-y-4 md:space-y-6">
-						<PlaySection />
-						<RecentMatches />
-					</div>
-
-					{/* Right Column - Stats & Online */}
-					<div className="space-y-4 md:space-y-6">
-						<QuickStats />
-						<OnlinePlayers />
-					</div>
-				</div>
-			</div>
+			<div className="p-4 md:p-6">{children}</div>
 		</main>
 	);
 }
 
-export default function Home() {
+export default function ProtectedLayout({ children }: { children: ReactNode }) {
 	return (
 		<SidebarProvider>
 			<div className="min-h-screen bg-background">
 				<Sidebar />
-				<MainContent />
+				<Shell>{children}</Shell>
 			</div>
 		</SidebarProvider>
 	);

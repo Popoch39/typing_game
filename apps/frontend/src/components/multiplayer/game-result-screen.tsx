@@ -1,26 +1,32 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { getRankFromRating, getTierColor } from "@repo/shared";
 import gsap from "gsap";
 import Link from "next/link";
+import { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useSession } from "@/hooks/use-auth";
-import { useMultiplayerStore } from "@/stores/use-multiplayer-store";
 import { cn } from "@/lib/utils";
-import { getRankFromRating, getTierColor } from "@repo/shared";
+import { useMultiplayerStore } from "@/stores/use-multiplayer-store";
 
 function RatingChangeBadge({
 	change,
 	oldRating,
 	newRating,
-}: { change: number; oldRating?: number; newRating?: number }) {
+}: {
+	change: number;
+	oldRating?: number;
+	newRating?: number;
+}) {
 	const ref = useRef<HTMLSpanElement>(null);
 
 	const oldRank = oldRating != null ? getRankFromRating(oldRating) : null;
 	const newRank = newRating != null ? getRankFromRating(newRating) : null;
 	const promoted =
-		oldRank && newRank && (oldRank.tier !== newRank.tier || oldRank.division !== newRank.division);
+		oldRank &&
+		newRank &&
+		(oldRank.tier !== newRank.tier || oldRank.division !== newRank.division);
 
 	useEffect(() => {
 		if (!ref.current) return;
@@ -58,11 +64,17 @@ function RatingChangeBadge({
 			{newRank && (
 				<div className="text-xs">
 					{promoted && oldRank && (
-						<span className="text-muted-foreground line-through" style={{ color: getTierColor(oldRank.tier) }}>
+						<span
+							className="text-muted-foreground line-through"
+							style={{ color: getTierColor(oldRank.tier) }}
+						>
 							{oldRank.tierLabel}
 						</span>
 					)}
-					<span className="ml-1 font-semibold" style={{ color: getTierColor(newRank.tier) }}>
+					<span
+						className="ml-1 font-semibold"
+						style={{ color: getTierColor(newRank.tier) }}
+					>
 						{newRank.tierLabel}
 					</span>
 					<span className="ml-1 font-mono text-muted-foreground">
@@ -76,7 +88,11 @@ function RatingChangeBadge({
 
 export function GameResultScreen({
 	onPlayAgain,
-}: { onPlayAgain: () => void }) {
+	onBackToDashboard,
+}: {
+	onPlayAgain: () => void;
+	onBackToDashboard?: () => void;
+}) {
 	const gameResult = useMultiplayerStore((s) => s.gameResult);
 	const isRanked = useMultiplayerStore((s) => s.isRanked);
 	const ratingChange = useMultiplayerStore((s) => s.ratingChange);
@@ -217,11 +233,21 @@ export function GameResultScreen({
 					<Button className="flex-1" variant="outline" onClick={onPlayAgain}>
 						Play Again
 					</Button>
-					<Link href="/" className="flex-1">
-						<Button variant="outline" className="w-full">
-							Solo Mode
+					{onBackToDashboard ? (
+						<Button
+							className="flex-1"
+							variant="outline"
+							onClick={onBackToDashboard}
+						>
+							Dashboard
 						</Button>
-					</Link>
+					) : (
+						<Link href="/" className="flex-1">
+							<Button variant="outline" className="w-full">
+								Solo Mode
+							</Button>
+						</Link>
+					)}
 				</div>
 			</CardContent>
 		</Card>

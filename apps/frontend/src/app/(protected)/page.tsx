@@ -1,48 +1,57 @@
 "use client";
 
-import { useEffect } from "react";
-import { ComboDisplay } from "@/components/typing/combo-display";
-import { TypingArea } from "@/components/typing/typing-area";
-import { TypingResult } from "@/components/typing/typing-result";
-import { TypingSettings } from "@/components/typing/typing-settings";
-import { TypingStats } from "@/components/typing/typing-stats";
-import { useTypingStore } from "@/stores/use-typing-store";
+import { OnlinePlayers } from "@/components/online-players";
+import { PlaySection } from "@/components/play-section";
+import { QuickStats } from "@/components/quick-stats";
+import { RecentMatches } from "@/components/recent-matches";
+import { useSession } from "@/hooks/use-auth";
+import { useMultiplayer } from "@/hooks/use-multiplayer";
 
-export default function Home() {
-	const { init, handleKeyPress, isComplete, isRunning } = useTypingStore();
+const GAME_DURATION = 15;
 
-	useEffect(() => {
-		init();
-		return () => {
-			useTypingStore.getState().engine?.destroy();
-		};
-	}, [init]);
+export default function DashboardPage() {
+	const { data: session } = useSession();
+	const mp = useMultiplayer();
 
-	useEffect(() => {
-		const handler = (e: KeyboardEvent) => handleKeyPress(e);
-		document.addEventListener("keydown", handler);
-		return () => document.removeEventListener("keydown", handler);
-	}, [handleKeyPress]);
+	const userName = session?.user?.name ?? "Player";
 
-	if (isComplete) {
-		return <TypingResult />;
-	}
+	const handleCancel = () => {
+		mp.leaveQueue();
+		mp.leaveRankedQueue();
+	};
 
 	return (
-		<div className="w-full space-y-6">
-			<div className="flex items-center justify-between">
-				<TypingStats />
-				<TypingSettings />
-			</div>
-			<div className="relative">
-				<ComboDisplay />
-				<TypingArea />
-			</div>
-			{!isRunning && (
-				<p className="text-center text-sm text-muted-foreground">
-					Start typing to begin...
+		<>
+			{/* Header */}
+			<div className="mb-6 md:mb-8 animate-slide-up">
+				<h1 className="text-2xl md:text-3xl font-bold text-foreground text-balance">
+					Welcome back, <span className="text-primary">{userName}</span>
+				</h1>
+				<p className="text-muted-foreground mt-1">
+					Ready for your next typing battle?
 				</p>
-			)}
-		</div>
+			</div>
+
+			{/* Main Grid */}
+			<div className="grid gap-4 md:gap-6 lg:grid-cols-3">
+				{/* Left Column - Play Options */}
+				<div className="lg:col-span-2 space-y-4 md:space-y-6">
+					<PlaySection
+						onQuickPlay={() => mp.joinQueue(GAME_DURATION)}
+						onRankedPlay={() => mp.joinRankedQueue(GAME_DURATION)}
+						onCreateRoom={() => mp.createRoom(GAME_DURATION)}
+						onJoinRoom={(code) => mp.joinRoom(code)}
+						onCancel={handleCancel}
+					/>
+					<RecentMatches />
+				</div>
+
+				{/* Right Column - Stats & Online */}
+				<div className="space-y-4 md:space-y-6">
+					<QuickStats />
+					<OnlinePlayers />
+				</div>
+			</div>
+		</>
 	);
 }

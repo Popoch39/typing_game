@@ -1,17 +1,26 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { CountdownScreen } from "@/components/multiplayer/countdown-screen";
 import { GameResultScreen } from "@/components/multiplayer/game-result-screen";
-import { LobbyScreen } from "@/components/multiplayer/lobby-screen";
 import { OpponentProgress } from "@/components/multiplayer/opponent-progress";
-import { WaitingScreen } from "@/components/multiplayer/waiting-screen";
 import { ComboDisplay } from "@/components/typing/combo-display";
 import { TypingArea } from "@/components/typing/typing-area";
 import { useMultiplayerGame } from "@/hooks/use-multiplayer-game";
 
 export default function MultiplayerPage() {
-	const { mp, typingStore, handlePlayAgain, handleCancel } =
-		useMultiplayerGame();
+	const router = useRouter();
+	const { mp, typingStore, handlePlayAgain } = useMultiplayerGame();
+
+	const handleBackToDashboard = () => {
+		router.push("/");
+	};
+
+	// If idle (no game in progress), redirect to dashboard
+	if (mp.status === "idle" || mp.status === "connecting") {
+		router.push("/");
+		return null;
+	}
 
 	return (
 		<>
@@ -25,19 +34,6 @@ export default function MultiplayerPage() {
 				<div className="w-full max-w-md rounded-lg bg-yellow-500/10 px-4 py-2 text-center text-sm text-yellow-600 dark:text-yellow-400">
 					Opponent disconnected — waiting 5s...
 				</div>
-			)}
-
-			{(mp.status === "idle" || mp.status === "connecting") && (
-				<LobbyScreen
-					onJoinQueue={mp.joinQueue}
-					onJoinRankedQueue={mp.joinRankedQueue}
-					onCreateRoom={mp.createRoom}
-					onJoinRoom={mp.joinRoom}
-				/>
-			)}
-
-			{(mp.status === "queuing" || mp.status === "in_room") && (
-				<WaitingScreen onCancel={handleCancel} />
 			)}
 
 			{mp.status === "countdown" && <CountdownScreen />}
@@ -70,27 +66,14 @@ export default function MultiplayerPage() {
 							Start typing to begin...
 						</p>
 					)}
-					{process.env.NODE_ENV !== "production" && mp.selfStats && (
-						<div className="rounded-md border border-dashed border-yellow-500/50 bg-yellow-500/5 px-3 py-2 font-mono text-xs text-yellow-600 dark:text-yellow-400">
-							<span className="font-semibold">DEBUG</span>
-							{" | "}
-							time correction:{" "}
-							<span
-								className={
-									mp.selfStats.timeCorrection !== 0
-										? "text-red-500 font-bold"
-										: ""
-								}
-							>
-								{mp.selfStats.timeCorrection}ms
-							</span>
-						</div>
-					)}
 				</div>
 			)}
 
 			{mp.status === "finished" && (
-				<GameResultScreen onPlayAgain={handlePlayAgain} />
+				<GameResultScreen
+					onPlayAgain={handlePlayAgain}
+					onBackToDashboard={handleBackToDashboard}
+				/>
 			)}
 		</>
 	);

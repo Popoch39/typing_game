@@ -1,48 +1,75 @@
 import { screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { useTypingStore } from "@/stores/use-typing-store";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { renderWithProviders } from "@/test/test-utils";
-import Home from "../page";
-
-const mockMutate = vi.fn();
+import DashboardPage from "../page";
 
 vi.mock("@/hooks/use-auth", () => ({
 	useSession: () => ({
 		data: {
-			user: { name: "Jean Dupont" },
-			session: { id: "1" },
+			user: { id: "u1", name: "TestUser", image: null },
+			session: { id: "s1", token: "tok" },
 		},
 	}),
-	useSignOut: () => ({
-		mutate: mockMutate,
+}));
+
+vi.mock("@/hooks/use-multiplayer", () => ({
+	useMultiplayer: () => ({
+		status: "idle",
+		connect: vi.fn(),
+		disconnect: vi.fn(),
+		joinQueue: vi.fn(),
+		leaveQueue: vi.fn(),
+		joinRankedQueue: vi.fn(),
+		leaveRankedQueue: vi.fn(),
+		createRoom: vi.fn(),
+		joinRoom: vi.fn(),
 	}),
+	useMultiplayerStore: (selector: (s: Record<string, unknown>) => unknown) =>
+		selector({
+			presence: { online: 0, queuing: 0, inGame: 0 },
+			status: "idle",
+			roomCode: null,
+			isRanked: false,
+		}),
+}));
+
+vi.mock("@/stores/use-multiplayer-store", () => ({
+	useMultiplayerStore: (selector: (s: Record<string, unknown>) => unknown) =>
+		selector({
+			presence: { online: 0, queuing: 0, inGame: 0 },
+			status: "idle",
+			roomCode: null,
+			isRanked: false,
+		}),
+}));
+
+vi.mock("@/hooks/use-rating", () => ({
+	useMyMatchHistory: () => ({ data: [], isLoading: false }),
 }));
 
 beforeEach(() => {
 	vi.clearAllMocks();
 });
 
-afterEach(() => {
-	const { engine } = useTypingStore.getState();
-	if (engine) engine.destroy();
-});
+describe("DashboardPage", () => {
+	it("should display the welcome message with user name", () => {
+		renderWithProviders(<DashboardPage />);
 
-describe("Home", () => {
-	it("should display user name and typing game UI", () => {
-		renderWithProviders(<Home />);
-
-		expect(screen.getByText("Jean Dupont")).toBeInTheDocument();
-		expect(screen.getByText("Typing Game")).toBeInTheDocument();
-		expect(screen.getByText("Start typing to begin...")).toBeInTheDocument();
+		expect(screen.getByText("TestUser")).toBeInTheDocument();
+		expect(screen.getByText(/Welcome back/)).toBeInTheDocument();
 	});
 
-	it("should call signOut.mutate on sign out button click", async () => {
-		const user = userEvent.setup();
-		renderWithProviders(<Home />);
+	it("should render game mode cards", () => {
+		renderWithProviders(<DashboardPage />);
 
-		await user.click(screen.getByRole("button", { name: "Sign out" }));
+		expect(screen.getByText("Quick Match")).toBeInTheDocument();
+		expect(screen.getByText("Ranked Match")).toBeInTheDocument();
+		expect(screen.getByText("Custom Game")).toBeInTheDocument();
+	});
 
-		expect(mockMutate).toHaveBeenCalled();
+	it("should render recent matches section", () => {
+		renderWithProviders(<DashboardPage />);
+
+		expect(screen.getByText("Recent Matches")).toBeInTheDocument();
 	});
 });

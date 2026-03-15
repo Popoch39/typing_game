@@ -130,7 +130,7 @@ function NavLink({
 
 	if (isCollapsed) {
 		return (
-			<Tooltip delayDuration={0}>
+			<Tooltip>
 				<TooltipTrigger>{content}</TooltipTrigger>
 				<TooltipContent side="right" className="flex flex-col">
 					<span className="font-medium">{item.label}</span>

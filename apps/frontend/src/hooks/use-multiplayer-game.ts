@@ -15,9 +15,16 @@ export function useMultiplayerGame() {
 
 	const sessionToken = session?.session?.token;
 
-	// Connect WS on mount
+	// Connect WS on mount — skip if already connected (navigated from dashboard)
+	// biome-ignore lint/correctness/useExhaustiveDependencies: mp methods are stable singleton refs
 	useEffect(() => {
 		if (!sessionToken || connectedRef.current) return;
+		const currentStatus = useMultiplayerStore.getState().status;
+		// If already in a game state, the dashboard already connected the shared client
+		if (currentStatus !== "idle") {
+			connectedRef.current = true;
+			return;
+		}
 		mp.connect(sessionToken);
 		connectedRef.current = true;
 
@@ -25,7 +32,6 @@ export function useMultiplayerGame() {
 			mp.disconnect();
 			connectedRef.current = false;
 		};
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [sessionToken]);
 
 	// Initialize typing engine when game starts (local visual only)
@@ -53,10 +59,10 @@ export function useMultiplayerGame() {
 			engine.destroy();
 			engineRef.current = null;
 		};
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [mp.status, mp.gameWords, mp.gameDuration]);
 
 	// Override local stats with server-authoritative stats
+	// biome-ignore lint/correctness/useExhaustiveDependencies: mp.selfStats triggers the sync
 	useEffect(() => {
 		const selfStats = useMultiplayerStore.getState().selfStats;
 		if (!selfStats) return;
@@ -79,6 +85,7 @@ export function useMultiplayerGame() {
 	}, [mp.selfComplete]);
 
 	// Keyboard handler for game — routes to local engine + sends keystroke to server
+	// biome-ignore lint/correctness/useExhaustiveDependencies: mp.sendKeystroke is a stable singleton ref
 	useEffect(() => {
 		if (mp.status !== "playing") return;
 
@@ -120,6 +127,7 @@ export function useMultiplayerGame() {
 		return () => document.removeEventListener("keydown", handler);
 	}, [mp.status]);
 
+	// biome-ignore lint/correctness/useExhaustiveDependencies: mp methods are stable singleton refs
 	const handlePlayAgain = useCallback(() => {
 		if (engineRef.current) {
 			engineRef.current.destroy();
@@ -133,9 +141,9 @@ export function useMultiplayerGame() {
 			mp.connect(token);
 			connectedRef.current = true;
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [session]);
 
+	// biome-ignore lint/correctness/useExhaustiveDependencies: mp methods are stable singleton refs
 	const handleCancel = useCallback(() => {
 		mp.leaveQueue();
 		mp.leaveRankedQueue();
@@ -146,7 +154,6 @@ export function useMultiplayerGame() {
 			mp.connect(token);
 			connectedRef.current = true;
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [session]);
 
 	return { mp, typingStore, handlePlayAgain, handleCancel };

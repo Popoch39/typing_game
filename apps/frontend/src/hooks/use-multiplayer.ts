@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useRef } from "react";
 import {
 	MultiplayerClient,
 	type MultiplayerState,
@@ -16,28 +15,24 @@ export type { MultiplayerStatus, OpponentState, MultiplayerState, SelfStats };
 // Re-export store for selector usage
 export { useMultiplayerStore };
 
-// --- Hook ---
+// --- Singleton client shared across all components ---
 
-export function useMultiplayer() {
-	const clientRef = useRef<MultiplayerClient | null>(null);
-	const store = useMultiplayerStore();
+let sharedClient: MultiplayerClient | null = null;
 
-	// Lazily create client
-	if (!clientRef.current) {
-		clientRef.current = new MultiplayerClient({
+function getClient(): MultiplayerClient {
+	if (!sharedClient) {
+		sharedClient = new MultiplayerClient({
 			onStateChange: (state) => useMultiplayerStore.setState(state),
 		});
 	}
+	return sharedClient;
+}
 
-	const client = clientRef.current;
+// --- Hook ---
 
-	// Cleanup on unmount — don't null the ref so strict mode
-	// re-run of effects can still use the same client instance
-	useEffect(() => {
-		return () => {
-			clientRef.current?.destroy();
-		};
-	}, []);
+export function useMultiplayer() {
+	const store = useMultiplayerStore();
+	const client = getClient();
 
 	return {
 		...store,
