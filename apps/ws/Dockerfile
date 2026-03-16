@@ -12,8 +12,13 @@ COPY packages/typescript-config ./node_modules/@repo/typescript-config
 COPY packages/database ./node_modules/@repo/database
 COPY packages/shared ./node_modules/@repo/shared
 
-FROM base AS runner
+FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY apps/ws/ .
+RUN bun build src/index.ts --outdir dist --target bun
+
+FROM base AS runner
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/dist ./dist
 EXPOSE 3002
-CMD ["bun", "--watch", "src/index.ts"]
+CMD ["bun", "dist/index.js"]
