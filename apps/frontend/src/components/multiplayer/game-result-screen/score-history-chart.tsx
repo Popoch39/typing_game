@@ -40,7 +40,12 @@ function CustomTooltip({
 	label,
 }: {
 	active?: boolean;
-	payload?: Array<{ dataKey: string; value: number; color: string }>;
+	payload?: Array<{
+		dataKey: string;
+		value: number;
+		color: string;
+		payload: ScoreHistoryPoint;
+	}>;
 	label?: number;
 }) {
 	if (!active || !payload?.length) return null;
